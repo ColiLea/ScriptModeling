@@ -1,5 +1,6 @@
 package scriptModeling
 
+// import "fmt"
 import "math"
 
 func (sampler *Sampler) documentLikelihood(events [][]string, label []int) float64 {

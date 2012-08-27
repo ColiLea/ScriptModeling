@@ -2,30 +2,19 @@ package scriptModeling
 
   import "fmt"
   import "math/rand"
+  import "math"
 
-func resample_v(esd *ESD) {
-  p := pick_invcount(esd.V)
-  fmt.Println("resampling v= ", esd.V, "for event", p)
-  alternatives := flip_invcount(*esd, p)
-  fmt.Println("Alternatives: ", alternatives, "\n")
-}
 
 func pick_invcount(v [numTop-1]int) int {
-  return rand.Intn(len(v))
+  newV := rand.Intn(len(v))
+  fmt.Println("Resampling v=", v , " for eventtype", newV)
+  return newV
 }
 
-func flip_invcount(esd ESD, c int) map[[numTop-1]int]struct{pi [numTop]int; label []int} {
-  alternatives := make(map[[numTop-1]int]struct{pi [numTop]int; label []int})
-  tmp:=new([numTop-1]int)
-  alternatives[esd.V] = struct{pi [numTop]int; label []int}{esd.Pi,esd.Label}
-  for ii:=0; ii<=(numTop-1)-c; ii++ {
-    *tmp=esd.V
-    if ii!= esd.V[c] {
-      tmp[c]=ii
-      newPi := computePi(*tmp, numTop)
-      newZ := computeZ(esd.Tao, newPi, numTop)
-      alternatives[*tmp]=struct{pi [numTop]int; label []int}{newPi,newZ}
-    }
+func vPrior (rho0 float64) []float64 {
+  vPrior := make([]float64, numTop)
+  for j:=0 ; j<numTop ; j++ {
+    vPrior[j] = (1.0/(math.Exp(rho0)-1.0))-((float64(numTop)-float64(j)+1.0)/(math.Exp(float64(numTop)-float64(j)+1.0)-1.0))
   }
-  return alternatives
+  return vPrior
 }

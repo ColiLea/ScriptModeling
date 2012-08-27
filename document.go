@@ -5,7 +5,8 @@ import "fmt"
 type ESD struct {
 // Elemantary-Sequence-Description, consisting of Lengt=number of events; Events=events(words); Tao=event realizations; V=inversions; Pi=global Ordering; Label=event labels
   Length int
-  Events []string
+  //TODO make Events [][]string (-> multiword events)
+  Events [][]string
   Tao [numTop]int
   V [numTop-1]int
   Pi [numTop]int
@@ -37,31 +38,9 @@ func (esd *ESD) ComputeZ(K int) {
   }
 }
 
-
-func computePi(v [numTop-1]int, K int) [numTop]int {
-// Compute global labeling from V (inversion count vector)
-  var pi [numTop]int
-  pi[0] = K-1
-  for j:=K-2; j>=0; j-- {
-   for i:=K-2; i>=v[j]; i-- {
-     pi[i+1]=pi[i]
-   }
-   pi[v[j]]=j
-  }
-  return pi
-}
-
-func computeZ(tao [numTop]int, pi [numTop]int, K int) []int{
-// Compute the ESD labeling from Tao (realization vector) and Pi (global labeling)
-  label := make([]int,numTop)
-  event:=0
-  for _,el := range(pi) {
-    if tao[el] == 1 {
-      label[event]=el
-      event++
-    }
-  }
-  return label[:event]
+func (esd *ESD) flipEvent(oldEvent int, newEvent int ) {
+  esd.Tao[oldEvent]=0
+  esd.Tao[newEvent]=1
 }
 
 func PrintESD(esd ESD) { 
