@@ -3,8 +3,6 @@ package scriptModeling
 import "fmt"
 import "math/rand"
 
-const numTop int = 7
-
 func pick_event(tao [numTop]int) int {
   //randomly select the event we want to resample
   var el int
@@ -20,7 +18,7 @@ func newTargets(esd ESD, target int) []int {
   newTargets := make([]int, numTop)
   newTargets[0] = target
   idx := 1
-  for eventtype,realized := range(esd.Tao) {
+  for eventtype,realized := range(esd.Events.Tau) {
     if realized == 0 {
       newTargets[idx]=eventtype
       idx++

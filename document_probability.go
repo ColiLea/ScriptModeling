@@ -27,7 +27,7 @@ func (sampler *Sampler) documentLikelihood(events [][]string, label []int) float
     if !realized {
       // *iterate over terms in vocabulary*
       for _, histogram := range(sampler.model.word_eventtype_histogram) {
-	wordEventFactor,_ = math.Lgamma(float64(histogram[k])+sampler.lmPrior)
+	wordEventFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior)
 	tokensGeneratedByEventtype+=histogram[k]
 	dcm += wordEventFactor
       }
@@ -42,12 +42,12 @@ func (sampler *Sampler) documentLikelihood(events [][]string, label []int) float
 	for token:=0 ; token<len(event) && update!=1.0; token++ {
 	  if term==event[token] {update = 1.0}
 	}
-	wordEventFactor,_ = math.Lgamma(float64(histogram[k])+sampler.lmPrior+update)
+	wordEventFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior+update)
 	tokensGeneratedByEventtype+=histogram[k]
 	dcm += wordEventFactor
       }
     }
-    wordNormalize,_ = math.Lgamma(float64(tokensGeneratedByEventtype) + float64(sampler.model.vocabSize)*sampler.lmPrior + float64(eventLength))
+    wordNormalize,_ = math.Lgamma(float64(tokensGeneratedByEventtype) + float64(sampler.model.vocabSize)*sampler.eventlmPrior + float64(eventLength))
     likelihood += (dcm-wordNormalize)
   }
   return likelihood

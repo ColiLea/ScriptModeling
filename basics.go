@@ -62,7 +62,7 @@ func computeZ(tao [numTop]int, pi [numTop]int) []int{
 func getLabels(esd ESD, oldE int, newEs []int)  [][]int {
   labels := make([][]int, len(newEs))
   for idx,newE := range(newEs) {
-    tmpTao := esd.Tao
+    tmpTao := esd.Events.Tau
     tmpTao[oldE]=0
     tmpTao[newE]=1
     labels[idx]=computeZ(tmpTao, esd.Pi)
