@@ -2,6 +2,6 @@ package scriptModeling
 
 import "fmt"
 
-func resample_rho() {
-  fmt.Println("resampling rho...\n")
+func Resample_rho() {
+  fmt.Println("resampling rho...")
 }

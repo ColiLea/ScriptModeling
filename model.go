@@ -1,6 +1,6 @@
 package scriptModeling
 
-import "fmt"
+// import "fmt"
 
 const vocabsize float64 = 5.0
 const numTop int = 7
@@ -36,6 +36,9 @@ func CreateModel (corpus *Corpus, topics int) *Model {
 }
 
 func (model *Model) Initialize(corpus *Corpus) {
+  for i:=0 ; i<numPar ; i++ {
+    model.participanttype_eventtype_histogram[i] = newHistogram(numTop)
+  }
   //Initialize histograms from corpus
   model.numESDs = len(*corpus)
   // *initialize eventtype counts*
@@ -45,9 +48,6 @@ func (model *Model) Initialize(corpus *Corpus) {
       // *initialize participanttype counts*
       for _, pLabel := range(esd.Participants.Label[eIdx]) {
 	model.participanttype_histogram[pLabel]++
-	if _, ok := model.participanttype_eventtype_histogram[pLabel] ; !ok {
-	  model.participanttype_eventtype_histogram[pLabel]=newHistogram(numTop)
-	}
 	model.participanttype_eventtype_histogram[pLabel][eLabel]++
       }
     }
@@ -68,7 +68,6 @@ func (model *Model) Initialize(corpus *Corpus) {
 	if _,ok := model.word_participanttype_histogram[word]; !ok {
 	  model.word_participanttype_histogram[word]=newHistogram(numPar)
 	}
-// 	fmt.Println(participant, word, esd.Participants.Label)
 	model.word_participanttype_histogram[word][esd.Participants.Label[event][participant]]++
       }
     }
@@ -89,9 +88,9 @@ func (model *Model) IncrementEventWordCount(events [][]string, label[]int, count
   }
 }
 
-func (model *Model) IncrementParticipantWordCount(participants []string, target int, count int) {
-  for _, word := range(participants) {
-    model.word_eventtype_histogram[word][target]+=count
+func (model *Model) IncrementParticipantWordCount(participantWords []string, target int, count int) {
+  for _, word := range(participantWords) {
+    model.word_participanttype_histogram[word][target]+=count
   }
 }
 
@@ -103,13 +102,14 @@ func (model *Model) IncrementParticipantCount(participant int, count int) {
    model.participanttype_histogram[participant]+=count
 }
 
-func (model *Model) IncrementEventParticipantCount(participants [][]int, events []int, count int) {
+func (model *Model) IncrementEventParticipantCount(eventID int, participant int, count int) {
+  model.participanttype_eventtype_histogram[participant][eventID]+=count
+}
+
+func (model *Model) IncrementEventParticipantCountAll(participants [][]int, events []int, count int) {
   for idx, label := range(events) {
     for _, participant := range(participants[idx]) {
-      if _, ok := model.participanttype_eventtype_histogram[participant] ; !ok {
-	model.participanttype_eventtype_histogram[participant]=newHistogram(numTop)
-      }
-      model.participanttype_eventtype_histogram[participant][label]+=count
+      model.IncrementEventParticipantCount(label, participant, count)
     }
   }
 }
@@ -118,14 +118,22 @@ func (model *Model) IncrementInversionCount(target int, count int) {
   model.invcount_histogram[target] += count
 }
 
-func (model *Model) ReassignCounts(esd ESD, target int, newValue int, mode string){
-  if mode=="event" {
+func (model *Model) ReassignCounts(esd ESD, target int, newValue int, eventID int, mode string){
+  if mode=="event" || mode=="inversion"  {
+    model.IncrementEventWordCount(esd.Events.Words, esd.Events.Label, 1)
+    if mode == "event" {
     model.IncrementEventCount(newValue, 1)
-    model.IncrementEventParticipantCount(esd.Participants.Label, esd.Events.Label, 1)
-  } else if mode=="inversion" {
+    model.IncrementEventParticipantCountAll(esd.Participants.Label, esd.Events.Label, 1)
+    } else if mode=="inversion" {
     model.IncrementInversionCount(target, newValue)
+    }
+  } else if mode=="participant" {
+    model.IncrementParticipantCount(newValue, 1)
+    model.IncrementEventParticipantCount(eventID, newValue, 1)
+    model.IncrementParticipantWordCount(esd.Participants.Words[eventID], newValue, 1)
+  } else {
+    panic("Invalid resampling mode!!")
   }
-  model.IncrementEventWordCount(esd.Events.Words, esd.Events.Label, 1)
 }
 
 
@@ -133,25 +141,16 @@ func (model *Model) DecrementCounts(eTarget int, pTarget int, eventLabel []int, 
   if mode=="event" {
     model.IncrementEventCount(eTarget, -1)
     model.IncrementEventWordCount(eventDescriptions, eventLabel, -1)
-    model.IncrementEventParticipantCount(participantLabel, eventLabel, -1)
+    model.IncrementEventParticipantCountAll(participantLabel, eventLabel, -1)
   } else if mode == "participant" {
     model.IncrementParticipantCount(pTarget, -1)
     model.IncrementParticipantWordCount(participantDescriptions[eTarget], pTarget, -1)
-    model.IncrementEventParticipantCount(participantLabel, eventLabel, -1)
+    model.IncrementEventParticipantCount(pTarget, eTarget, -1)
   } else if mode == "inversion" {
     model.IncrementInversionCount(eTarget, -invCount)
     model.IncrementEventWordCount(eventDescriptions, eventLabel, -1)
-    model.IncrementEventParticipantCount(participantLabel, eventLabel, -1)
+    model.IncrementEventParticipantCountAll(participantLabel, eventLabel, -1)
   } else {
     panic("Invalid resampling mode!!")
   }
 }
-
-// func (model *Model) DecrementCounts(target int, label []int, esd [][]string){
-//   model.IncrementEventCount(target, -1)
-//   for idx,event := range(esd) {
-//     for _, word := range(event) {
-//       model.IncrementWordCount(label[idx], word, -1)
-//     }
-//   }
-// }
