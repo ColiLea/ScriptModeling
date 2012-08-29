@@ -60,12 +60,35 @@ func computeZ(tao [numTop]int, pi [numTop]int) []int{
 }
 
 func getLabels(esd ESD, oldE int, newEs []int)  [][]int {
+  // Get event labels for all suggested flips
   labels := make([][]int, len(newEs))
   for idx,newE := range(newEs) {
     tmpTao := esd.Events.Tau
     tmpTao[oldE]=0
     tmpTao[newE]=1
     labels[idx]=computeZ(tmpTao, esd.Pi)
+  }
+  return labels
+}
+
+
+func getPLabels(currentLabel [][]int, target int, event int, proposals []int)  [][][]int {
+  // get participant labels for all suggested flips
+  labels := make([][][]int, len(proposals))
+  var tmpLabel [][]int
+  for propIndex,pp := range(proposals) {
+    tmpLabel = make([][]int, len(currentLabel))
+    for idx, el := range(currentLabel) {
+      tmpLabel[idx]=make([]int, len(currentLabel[idx]))
+      for ii, p := range(el) {
+	if ii==target && idx==event {
+	  tmpLabel[idx][ii]=pp
+	} else {
+	  tmpLabel[idx][ii]=p
+	}
+      }
+    }
+    labels[propIndex]=tmpLabel
   }
   return labels
 }

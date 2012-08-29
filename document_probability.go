@@ -3,15 +3,21 @@ package scriptModeling
 // import "fmt"
 import "math"
 
-func (sampler *Sampler) documentLikelihood(events [][]string, label []int) float64 {
+func (sampler *Sampler) documentLikelihood(events [][]string, label []int, participants [][]string, plabel [][]int) float64 {
+  ll := sampler.documentLikelihoodEvents(events, label)
+  ll += sampler.documentLikelihoodParticipants(participants, plabel)
+  return ll
+}
+
+func(sampler *Sampler) documentLikelihoodEvents(events [][]string, label []int) float64 {
   // compute log document likelihood for each eventtype in the model given current labeling
-  var labelIdx, tokensGeneratedByEventtype, eventLength int
+  var labelIdx, tokensGeneratedByEventtype, delta int
   var realized bool
   var dcm, update, likelihood, wordEventFactor, wordNormalize float64
   var event []string
   // *range over eventtypes j'*
   for k:=0 ; k<numTop ; k++ {
-    eventLength = 0
+    delta = 0
     dcm = 0.0
     tokensGeneratedByEventtype = 0
     
@@ -23,7 +29,6 @@ func (sampler *Sampler) documentLikelihood(events [][]string, label []int) float
 	labelIdx=idx
       }
     }
-
     if !realized {
       // *iterate over terms in vocabulary*
       for _, histogram := range(sampler.model.word_eventtype_histogram) {
@@ -33,7 +38,7 @@ func (sampler *Sampler) documentLikelihood(events [][]string, label []int) float
       }
     } else {
       event = events[labelIdx]
-      eventLength = len(event)
+      delta = len(event)
       
       // *iterate over terms in vocabulary*
       for term, histogram := range(sampler.model.word_eventtype_histogram) {
@@ -47,8 +52,35 @@ func (sampler *Sampler) documentLikelihood(events [][]string, label []int) float
 	dcm += wordEventFactor
       }
     }
-    wordNormalize,_ = math.Lgamma(float64(tokensGeneratedByEventtype) + float64(sampler.model.vocabSize)*sampler.eventlmPrior + float64(eventLength))
+    wordNormalize,_ = math.Lgamma(float64(tokensGeneratedByEventtype) + float64(sampler.model.vocabSize)*sampler.eventlmPrior + float64(delta))
     likelihood += (dcm-wordNormalize)
+  }
+  return likelihood
+}
+
+func (sampler *Sampler) documentLikelihoodParticipants(participants [][]string, label [][]int) float64 {
+  var wordParticipantFactor, wordNormalize, dcm, update, likelihood float64
+  var tokensGeneratedByParticipanttype, delta int
+  for i:=0 ; i<numPar ; i++ {
+    delta = 0
+    dcm = 0.0
+    tokensGeneratedByParticipanttype = 0
+    for term, histogram := range(sampler.model.word_participanttype_histogram) {
+      tokensGeneratedByParticipanttype+=histogram[i]
+      update=0.0
+      for e, events := range(participants) {
+	for p, _ := range(events) {
+	  if participants[e][p]==term && label[e][p]==i {
+	    update+=1.0
+	    delta++
+	  }
+	}
+      }
+      wordParticipantFactor, _ = math.Lgamma(float64(histogram[i])+sampler.participantlmPrior+update)
+      dcm += wordParticipantFactor
+    }
+    wordNormalize,_ = math.Lgamma(float64(tokensGeneratedByParticipanttype) + float64(len(sampler.model.word_participanttype_histogram)) * sampler.participantlmPrior + float64(delta))
+    likelihood += dcm-wordNormalize
   }
   return likelihood
 }

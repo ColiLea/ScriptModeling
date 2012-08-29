@@ -71,7 +71,7 @@ func (sampler *Sampler) Resample_t(esd ESD, target int) {
       docNormalize,_ = math.Lgamma(float64(sampler.model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior+update)
       lgamma += ((docPositive+docNegative)-docNormalize)
     }
-    documentLikelihood = sampler.documentLikelihood(esd.Events.Words, labels[idx])
+    documentLikelihood = sampler.documentLikelihood(esd.Events.Words, labels[idx], esd.Participants.Words, esd.Participants.Label)
     distribution[idx]=lgamma+documentLikelihood
   }
   // sample new label
@@ -96,7 +96,7 @@ func (sampler *Sampler) Resample_v(esd ESD, target int) {
     label = computeZ(esd.Events.Tau, computePi(proposedV))
     // NOTE: I am using the **unnormalized log of GMM(target; rho_target)** (Chen does the same!!)
     // NOTE: I am using 'k+1' below as my topicIDs start with 0 ...shouldn't matter, right???
-    distribution[k] = -sampler.rho[target] * float64(k+1) + sampler.documentLikelihood(esd.Events.Words, label)
+    distribution[k] = -sampler.rho[target] * float64(k+1) + sampler.documentLikelihood(esd.Events.Words, label, esd.Participants.Words, esd.Participants.Label)
   }
   // sample new value
   newV = getAccumulativeSample(distribution)
@@ -117,6 +117,7 @@ func (sampler *Sampler) Resample_p(esd ESD, targets [2]int) {
   target := esd.Participants.Label[eventID][participantID]
   // Get alternative participant types
   alternatives := getAlternatives(target, esd.Participants.Label[eventID])
+  labels := getPLabels(esd.Participants.Label, participantID, eventID, alternatives)
   // Decrement Counts
   (sampler.model).DecrementCounts(eventID, target, esd.Events.Label, esd.Participants.Label, -1, esd.Events.Words, esd.Participants.Words, "participant")
   // Compute likelihood for every types
@@ -131,7 +132,7 @@ func (sampler *Sampler) Resample_p(esd ESD, targets [2]int) {
       pNormalize, _ = math.Lgamma(float64(sampler.model.participanttype_histogram[proposedV])+sampler.participantPosPrior+sampler.participantNegPrior+update)
       lgamma = ((pPositive+pNegative)-pNormalize)
     }
-    documentLikelihood = sampler.documentLikelihood(esd.Events.Words, esd.Events.Label)/* + sampler.documentLikelihood(esd.Participants.Words, esd.Participants.Label)*/
+    documentLikelihood = sampler.documentLikelihood(esd.Events.Words, esd.Events.Label, esd.Participants.Words, labels[idx])
     distribution[idx]=lgamma+documentLikelihood
   }
   newV = getAccumulativeSample(distribution)
