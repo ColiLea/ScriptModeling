@@ -1,31 +1,33 @@
-package scriptModeling
+ package scriptModeling
 
 import "math/rand"
-import "fmt"
+// import "fmt"
 
 func (esd *ESD) hasParticipants() bool {
-  for _,event := range(esd.Participants.Label) {
-    if len(event) > 0 {
+  // check whether there are any participants in the esd
+  for _,event := range(esd.Label) {
+    if len(event.Participants) > 0 {
       return true
     }
   }
   return false
 }
 
-func Pick_participant(esd ESD) [2]int {
-  //randomly select the participant we want to resample
-  event := rand.Intn(len(esd.Participants.Label))
-  // pick an event (which has participants)
-  for len(esd.Participants.Label[event]) == 0 {
-    event = rand.Intn(len(esd.Participants.Label))
+func Pick_participant(label *Label) [2]int {
+  // Pick a random participant type to resample from the esd labeling
+  participants := make([][2]int, numTop*numPar)
+  var idx int
+  for eID, event := range(*label) {
+    for pID,_ := range(event.Participants) {
+      participants[idx]=[2]int{eID, pID}
+      idx++
+    }
   }
-  // pick a participant
-  participant := rand.Intn(len(esd.Participants.Label[event]))
-  fmt.Println("Resampling p=", esd.Participants.Label , " for participant ", esd.Participants.Label[event][participant], "in event ", esd.Events.Label[event])
-  return [2]int{event, participant}
+  target := rand.Intn(len(participants[:idx]))
+  return participants[target]
 }
   
-func getAlternatives(participant int, label []int) []int {
+func getAlternatives(participant int, label map[int][]string) []int {
   // Get alternative participant types ; TODO: ugly function!!
   var add bool
   idx := 1
@@ -35,8 +37,8 @@ func getAlternatives(participant int, label []int) []int {
     add=false
     if ii!= alts[0] {
       add=true
-      for _,el := range(label) {
-	if el==ii {
+      for pID,_ := range(label) {
+	if pID==ii {
 	  add=false
 	  break
 	}

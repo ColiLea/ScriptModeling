@@ -1,4 +1,4 @@
-package scriptModeling
+ package scriptModeling
 
 import "fmt"
 

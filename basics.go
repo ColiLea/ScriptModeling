@@ -1,4 +1,4 @@
-package scriptModeling
+ package scriptModeling
 
 import "math/rand"
 import "fmt"
@@ -63,7 +63,7 @@ func getLabels(esd ESD, oldE int, newEs []int)  [][]int {
   // Get event labels for all suggested flips
   labels := make([][]int, len(newEs))
   for idx,newE := range(newEs) {
-    tmpTao := esd.Events.Tau
+    tmpTao := esd.Tau
     tmpTao[oldE]=0
     tmpTao[newE]=1
     labels[idx]=computeZ(tmpTao, esd.Pi)
@@ -91,4 +91,56 @@ func getPLabels(currentLabel [][]int, target int, event int, proposals []int)  [
     labels[propIndex]=tmpLabel
   }
   return labels
+}
+
+
+func updateLabeling(event int, oldVal int, newVal int, label Label, mode string) Label {
+  newLabel := make(Label, len(label))
+  if oldVal == newVal {
+    return label
+  }
+  if mode == "event" {
+    for k, v := range(label) {
+      if k==oldVal {
+	newLabel[newVal]=v
+      }
+      newLabel[k]=v
+      delete(newLabel, oldVal)
+    }
+  } else if mode == "participant" {
+    for k,v := range(label) {
+      newLabel[k]=v
+    }
+    for k,v := range(label[event].Participants) {
+      if k==oldVal {
+	newLabel[event].Participants[newVal]=v
+      }
+      newLabel[event].Participants[k]=v
+      delete(newLabel[event].Participants, oldVal)
+    }
+  }
+  return newLabel
+}
+
+func UpdateLabelingV(tau [numTop]int, pi [numTop]int, eventLabel []int, label Label) Label {
+  newZ := computeZ(tau, pi)
+  newLabel := make(Label, len(label))
+  update:=false
+  for idx,_ := range(newZ) {
+    if newZ[idx] != eventLabel[idx] {
+      update=true
+    }
+  }
+  if update==false {
+    return label
+  } else {
+    contents := make([]Content, len(label))
+    for idx,eID := range(eventLabel) {
+      contents[idx]=label[eID]
+    }
+    for idx, id := range(newZ) {
+      newLabel[id]=contents[idx]
+    }
+  }
+  return newLabel
 }
