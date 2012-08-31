@@ -62,7 +62,7 @@ func (esd *ESD) UpdateLabelingT(oldVal int, newVal int) {
 }
 
 func (esd *ESD) UpdateLabelingP(eventIdx int, oldVal int, newVal int) {
-    copy(esd.Label[eventIdx].Participants[newVal],esd.Label[eventIdx].Participants[oldVal])
+    esd.Label[eventIdx].Participants[newVal]=esd.Label[eventIdx].Participants[oldVal]
     delete(esd.Label[eventIdx].Participants, oldVal)
 }
 

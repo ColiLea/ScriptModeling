@@ -147,8 +147,10 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
     if idx==0 {
       proposedLabels[idx]=esd.Label
     } else {
-      proposedLabels[idx]=updateLabelingP(event, alternatives[idx-1], proposedP, esd.Label)
+      esd.UpdateLabelingP(event, alternatives[idx-1], proposedP)
+      proposedLabels[idx]=esd.Label
     }
+    target=alternatives[idx]
     lgamma = 0.0
     for i:=0 ; i<numPar ; i++ {
       update = 0.0
@@ -163,7 +165,7 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
   }
   newV = getAccumulativeSample(distribution)
   //update esd and model
-  esd.UpdateLabelingP(event, target, alternatives[newV])
+  esd.UpdateLabelingP(event, alternatives[len(alternatives)-1], alternatives[newV])
   sampler.Model.participanttype_histogram[alternatives[newV]]++
   sampler.Model.participanttype_eventtype_histogram[alternatives[newV]][event]++
   sampler.Model.UpdateParticipantWordCounts(alternatives[newV], esd.Label[event].Participants[alternatives[newV]], 1)
