@@ -99,27 +99,6 @@ func (model *Model) UpdateEventParticipantCountsAll(label Label, count int) {
 }
 
 
-// 
-// func (model *Model) ReassignCounts(esd ESD, target int, newValue int, eventID int, mode string){
-//   if mode=="event" || mode=="inversion"  {
-//     model.IncrementEventWordCount(esd.Events.Words, esd.Events.Label, 1)
-//     if mode == "event" {
-//     model.IncrementEventCount(newValue, 1)
-//     model.IncrementEventParticipantCountAll(esd.Participants.Label, esd.Events.Label, 1)
-//     } else if mode=="inversion" {
-//     model.IncrementInversionCount(target, newValue)
-//     }
-//   } else if mode=="participant" {
-//     model.IncrementParticipantCount(newValue, 1)
-//     model.IncrementEventParticipantCount(eventID, newValue, 1)
-//     model.IncrementParticipantWordCount(esd.Participants.Words[eventID], newValue, 1)
-//   } else {
-//     panic("Invalid resampling mode!!")
-//   }
-// }
-// 
-
-
 func (model Model) Print() {
   fmt.Println("Eventtype Hist: ", model.eventtype_histogram)
   fmt.Println("Participa Hist: ", model.participanttype_histogram)

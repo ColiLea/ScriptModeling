@@ -1,6 +1,6 @@
  package scriptModeling
 
-import "fmt"
+// import "fmt"
 import "math"
 import "math/rand"
 
@@ -61,7 +61,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   // compute switch-likelihood
   distribution := make([]float64, len(alternatives))
   for idx,alternative := range(alternatives) {
-    proposedLabels[idx] = updateLabeling(-1, target, alternative, esd.Label, "event")
+    proposedLabels[idx] = updateLabelingT(target, alternative, esd.Label)
     lgamma = 0.0
     for k:=0 ; k<numTop ; k++ {
       update=0.0
@@ -78,7 +78,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   newLabel = getAccumulativeSample(distribution)
   // update model & esd
    esd.flipEvent(target, alternatives[newLabel])
-   esd.UpdateLabeling(-1, target, alternatives[newLabel], "event")
+   esd.UpdateLabelingT(target, alternatives[newLabel])
    sampler.Model.eventtype_histogram[alternatives[newLabel]]++
    sampler.Model.UpdateEventWordCounts(esd.Label, 1)
    sampler.Model.UpdateEventParticipantCountsAll(esd.Label, 1)
@@ -143,25 +143,27 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
   sampler.Model.participanttype_eventtype_histogram[target][event]--
   // Compute likelihood for every types
   distribution = make([]float64, len(alternatives))
-  for idx, proposedV := range(alternatives) {
-    proposedLabels[idx]=updateLabeling(event, target, proposedV, esd.Label, "participant")
+  for idx, proposedP := range(alternatives) {
+    if idx==0 {
+      proposedLabels[idx]=esd.Label
+    } else {
+      proposedLabels[idx]=updateLabelingP(event, alternatives[idx-1], proposedP, esd.Label)
+    }
     lgamma = 0.0
     for i:=0 ; i<numPar ; i++ {
       update = 0.0
-      if i==proposedV {update = 1.0}
-      pPositive, _ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[proposedV][event]) + sampler.participantPosPrior + update)
-      pNegative, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedV]-sampler.Model.participanttype_eventtype_histogram[proposedV][event]) + sampler.participantNegPrior - update)
-      pNormalize, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedV])+sampler.participantPosPrior+sampler.participantNegPrior+update)
+      if i==proposedP {update = 1.0}
+      pPositive, _ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[proposedP][event]) + sampler.participantPosPrior + update)
+      pNegative, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedP]-sampler.Model.participanttype_eventtype_histogram[proposedP][event]) + sampler.participantNegPrior - update)
+      pNormalize, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedP])+sampler.participantPosPrior+sampler.participantNegPrior+update)
       lgamma += ((pPositive+pNegative)-pNormalize)
-//       fmt.Println(update, lgamma)
     }
     documentLikelihood = sampler.documentLikelihood(proposedLabels[idx])
     distribution[idx]=lgamma+documentLikelihood
   }
   newV = getAccumulativeSample(distribution)
-  fmt.Println(newV)
   //update esd and model
-  esd.UpdateLabeling(event, target, alternatives[newV], "participant")
+  esd.UpdateLabelingP(event, target, alternatives[newV])
   sampler.Model.participanttype_histogram[alternatives[newV]]++
   sampler.Model.participanttype_eventtype_histogram[alternatives[newV]][event]++
   sampler.Model.UpdateParticipantWordCounts(alternatives[newV], esd.Label[event].Participants[alternatives[newV]], 1)

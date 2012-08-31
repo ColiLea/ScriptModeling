@@ -3,7 +3,7 @@ package scriptModeling
 import "fmt"
 
 type ESD struct {
-// Elemantary-Sequence-Description, consisting of Lengt=number of events; Events=events(words); Tao=event realizations; V=inversions; Pi=global Ordering; Label=event labels
+// Elemantary-Sequence-Description
   Label Label
   Length int
   Tau [numTop]int
@@ -54,17 +54,16 @@ func (esd *ESD) flipEvent(oldEvent int, newEvent int ) {
   esd.Tau[newEvent]=1
 }
 
-func (esd *ESD) UpdateLabeling(eventIdx int, oldVal int, newVal int, mode string) {
-  if mode=="event" {
+
+func (esd *ESD) UpdateLabelingT(oldVal int, newVal int) {
     esd.Label[newVal]=esd.Label[oldVal]
     delete(esd.Label, oldVal)
     esd.ComputeZ()
-  } else if mode=="participant" {
+}
+
+func (esd *ESD) UpdateLabelingP(eventIdx int, oldVal int, newVal int) {
     copy(esd.Label[eventIdx].Participants[newVal],esd.Label[eventIdx].Participants[oldVal])
     delete(esd.Label[eventIdx].Participants, oldVal)
-  } else {
-    panic("Invalid resampling mode!")
-  }
 }
 
 func (esd *ESD) UpdateLabelingV() {

@@ -15,10 +15,8 @@ func (sampler *Sampler) documentLikelihood(label Label) float64 {
       typeWordTotal += histogram[k]
       update = 0
       // check if eventtype is realized as term and set 'update' accordingly
-      for eID,_ := range(label) {
-	if eID==k {
-	  update = computeDelta(term, label[eID].Words)
-	}
+      if _,ok := label[k]; ok {
+	  update = computeDelta(term, label[k].Words)
       }
       // compute LGamma(N(word,event) + prior + udpate)
       wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior+float64(update))
@@ -39,20 +37,19 @@ func (sampler *Sampler) documentLikelihood(label Label) float64 {
        update = 0
        // check if participanttype is realized as term and set 'update' accordingly
        for eID, event := range(label) {
-	 for pID,_ := range(event.Participants) {
-	   if pID == i {
-	     update = computeDelta(term, label[eID].Participants[pID])
-	     totalUpdate += update
-	   }
+	 if _, ok := event.Participants[i] ; ok {
+	   update += computeDelta(term, label[eID].Participants[i])
 	 }
        }
+       totalUpdate += update
        // compute LGamma(N(word,part) + prior + update)
        wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+sampler.participantlmPrior+float64(update))
        wordFactor += wordTypeFactor
      }
      // normalize
-     wordNorm,_ := math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
+     wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
      documentLikelihood += (wordFactor - wordNorm)
+
   }
   return documentLikelihood
 }
