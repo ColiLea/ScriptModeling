@@ -1,10 +1,9 @@
  package scriptModeling
 
-import "fmt"
+// import "fmt"
 import "math"
 
 func (sampler *Sampler) documentLikelihood(label Label) float64 {
-  fmt.Println(label)
   var wordTypeFactor, wordFactor, wordNorm, documentLikelihood float64
   var typeWordTotal, update, totalUpdate int
   // iterate over eventtypes

@@ -1,13 +1,39 @@
  package scriptModeling
-
+ 
+ 
 import "fmt"
-import "math"
+import "strconv"
+import "os/exec"
+import "strings"
 
-func Resample_rho() {
-  fmt.Println("resampling rho...")
+func (sampler *Sampler)Resample_rho() {
+  var v_0, nu_0 float64
+  var totalV, numDocs, nminusj int
+  var slicesampler string
+//   for target,lastRho := range(sampler.rho) {
+    lastRho := 0.7
+    target := 3
+    totalV = sampler.Model.invcount_histogram[target]
+    v_0 = sampler.v_0[target]
+    nu_0 = sampler.nu_0
+    numDocs = sampler.Model.numESDs
+    nminusj = numTop-target
+
+    slicesampler = getSliceSampler([]string{"1", "3", "@logposterior", strconv.FormatFloat(lastRho, 'f', -1 , 64), "5", "false", strconv.Itoa(totalV), strconv.FormatFloat(v_0, 'f', -1, 64), strconv.FormatFloat(nu_0, 'f', -1, 64), strconv.Itoa(numDocs), strconv.Itoa(nminusj)})    
+
+    cmd := exec.Command("octave", "-q")
+    cmd.Dir = "/home/lea/Code/Octave/"
+    cmd.Stdin = strings.NewReader(slicesampler)
+    
+    out, err := cmd.Output()
+    fmt.Println("out",string(out))
+    if err != nil {
+      fmt.Println(err)
+    }
+//   }
 }
 
-func (sampler *Sampler)rhoPosterior(rho float64, target int) (prob float64) {
-  prob = -rho * (float64(sampler.Model.invcount_histogram[target]) + sampler.v_0[target]*sampler.nu_0) - (sampler.nu_0 + float64(sampler.Model.numESDs)) * (math.Log1p(-math.Exp((float64(numTop-target)) * rho)) - math.Log1p(-math.Exp(-rho)))
-  return
+
+func getSliceSampler(args []string) string {
+  return "samples = slicesample("+strings.Join(args, ", ")+`)`
 }

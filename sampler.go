@@ -1,6 +1,6 @@
  package scriptModeling
 
-// import "fmt"
+import "fmt"
 import "math"
 import "math/rand"
 
@@ -12,8 +12,8 @@ type Sampler struct {
   participantNegPrior float64
   participantlmPrior float64
   nu_0 float64
-  v_0 []float64
-  rho []float64
+  v_0 [numTop-1]float64
+  rho [numTop-1]float64
   eventProbCache [][]float64
   Model Model
 }
@@ -38,13 +38,17 @@ func (sampler *Sampler)PickVariable(esd *ESD) {
   //select which random variable to resample; 0:t  1:v  2:rho
   rr := rand.Intn(4)
   if rr ==0 && esd.hasParticipants() {
+    fmt.Println("Resampling P...\n")
 //     sampler.Resample_p(esd, Pick_participant(esd.Label))
   } else if rr==1{
+    fmt.Println("Resampling V...\n")
 //     sampler.Resample_v(esd, pick_invcount(esd.V))
   } else if rr==2{
+    fmt.Println("Resampling T...\n")
     sampler.Resample_t(esd, pick_event(esd.Tau))
   } else {
-    Resample_rho()
+    fmt.Println("Resampling Rho...\n")
+    sampler.Resample_rho()
   }
 }
 
