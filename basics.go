@@ -1,7 +1,7 @@
  package scriptModeling
 
 import "math/rand"
-import "fmt"
+// import "fmt"
 
 type Histogram []int
 type Distribution []float64
@@ -11,12 +11,30 @@ func newHistogram(topics int) Histogram {
 }
 
 
+func sample(distribution []float64) int {
+  // samples from a normalized distribution; returns the INDEX of the value sampled
+  distribution_sum := 0.0
+  for _, v := range distribution {
+    distribution_sum += v
+  }
+  choice := rand.Float64() * float64(distribution_sum)
+  sum_so_far := 0.0
+  for i, v := range distribution {
+    sum_so_far += v
+    if sum_so_far >= choice {
+      return i;
+    }
+  }
+  return -1;
+}
+
 func getAccumulativeSample(distribution Distribution) int {
+  // samples from an unnormalized distribution; (1) normalizes (2)returns the INDEX of the value sampled
   // normalize
   sum := 0.0
   for _,val := range(distribution) {sum += val}
   for dIdx,_ := range(distribution) {distribution[dIdx] = distribution[dIdx]/sum}
-  fmt.Println(distribution)
+//   fmt.Println(distribution)
   // get sample
   distribution_sum := 0.0
   for _, v := range distribution {

@@ -1,6 +1,7 @@
  package scriptModeling
 
 import "math/rand"
+import "math"
 // import "fmt"
 
 func (esd *ESD) hasParticipants() bool {
@@ -50,4 +51,47 @@ func getAlternatives(participant int, label map[int][]string) []int {
     }
   }
   return alts
+}
+
+func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
+  var lgamma, update, pPositive, pNegative, pNormalize, documentLikelihood float64
+  var distribution []float64
+  var newV int
+  event := targets[0]
+  target := targets[1]
+  // Get alternative participant types
+  alternatives := getAlternatives(target, esd.Label[event].Participants) 
+  proposedLabels := make([]Label, len(alternatives))  
+  // Decrement Counts
+  sampler.Model.participanttype_histogram[target]--
+  sampler.Model.UpdateParticipantWordCounts(target, esd.Label[event].Participants[target], -1)
+  sampler.Model.participanttype_eventtype_histogram[target][event]--
+  // Compute likelihood for every types
+  distribution = make([]float64, len(alternatives))
+  for idx, proposedP := range(alternatives) {
+    if idx==0 {
+      proposedLabels[idx]=esd.Label
+    } else {
+      esd.UpdateLabelingP(event, alternatives[idx-1], proposedP)
+      proposedLabels[idx]=esd.Label
+    }
+    target=alternatives[idx]
+    lgamma = 0.0
+    for i:=0 ; i<numPar ; i++ {
+      update = 0.0
+      if i==proposedP {update = 1.0}
+      pPositive, _ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[proposedP][event]) + sampler.participantPosPrior + update)
+      pNegative, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedP]-sampler.Model.participanttype_eventtype_histogram[proposedP][event]) + sampler.participantNegPrior - update)
+      pNormalize, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedP])+sampler.participantPosPrior+sampler.participantNegPrior+update)
+      lgamma += ((pPositive+pNegative)-pNormalize)
+    }
+    documentLikelihood = sampler.documentLikelihood(proposedLabels[idx])
+    distribution[idx]=lgamma+documentLikelihood
+  }
+  newV = getAccumulativeSample(distribution)
+  //update esd and model
+  esd.UpdateLabelingP(event, alternatives[len(alternatives)-1], alternatives[newV])
+  sampler.Model.participanttype_histogram[alternatives[newV]]++
+  sampler.Model.participanttype_eventtype_histogram[alternatives[newV]][event]++
+  sampler.Model.UpdateParticipantWordCounts(alternatives[newV], esd.Label[event].Participants[alternatives[newV]], 1)
 }

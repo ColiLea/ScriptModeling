@@ -10,9 +10,9 @@ func (sampler *Sampler)Resample_rho() {
   var v_0, nu_0 float64
   var totalV, numDocs, nminusj int
   var slicesampler string
-//   for target,lastRho := range(sampler.rho) {
-    lastRho := 0.7
-    target := 3
+  for idx,target := range(sampler.rho) {
+    lastRho := target
+    target := idx
     totalV = sampler.Model.invcount_histogram[target]
     v_0 = sampler.v_0[target]
     nu_0 = sampler.nu_0
@@ -30,7 +30,7 @@ func (sampler *Sampler)Resample_rho() {
     if err != nil {
       fmt.Println(err)
     }
-//   }
+  }
 }
 
 

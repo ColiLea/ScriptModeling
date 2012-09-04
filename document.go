@@ -56,9 +56,11 @@ func (esd *ESD) flipEvent(oldEvent int, newEvent int ) {
 
 
 func (esd *ESD) UpdateLabelingT(oldVal int, newVal int) {
-    esd.Label[newVal]=esd.Label[oldVal]
-    delete(esd.Label, oldVal)
-    esd.ComputeZ()
+    if oldVal != newVal {
+      esd.Label[newVal]=esd.Label[oldVal]
+      delete(esd.Label, oldVal)
+      esd.ComputeZ()
+    }
 }
 
 func (esd *ESD) UpdateLabelingP(eventIdx int, oldVal int, newVal int) {

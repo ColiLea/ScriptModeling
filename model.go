@@ -1,10 +1,9 @@
- package scriptModeling
-// 
+package scriptModeling
+
 import "fmt"
-// 
-const vocabsize float64 = 5.0
-const numTop int = 7
-const numPar int = 5
+
+const numTop int = 3
+const numPar int = 2
 
 type Model struct {
 // Model type, Contains all priors; eventhistogram=counts of events; eventInvcounthistogram:eventspecific inversioncounts; wordEventhistogram:wordspecific eventcounts
@@ -29,6 +28,7 @@ func NewModel() *Model {
   model.participanttype_eventtype_histogram = make(map[int]Histogram, numPar)
   return model
 }
+
 
 func CreateModel (corpus *Corpus, topics int) *Model {
   model := NewModel()
@@ -74,8 +74,6 @@ func (model *Model) Initialize(corpus *Corpus) {
   model.participantVocabulary = len(model.word_participanttype_histogram)
 }
 
-
-
 func (model *Model) UpdateEventWordCounts(label Label, count int) {
    for eID, event := range(label) {
      for _, word := range(event.Words) {
@@ -118,3 +116,39 @@ func (model Model) Print() {
     fmt.Println(wd, e)
   }
 }
+
+
+// func ReadModel(file string) *Model {
+//   var ii int
+//   var events []string
+//   model := NewModel()
+//   byteData,_ := ioutil.ReadFile(file)
+//   data := string(byteData)
+//   fields := strings.Split(data, "\n")
+//   ii,_ = strconv.Atoi(fields[0])
+//   model.numESDs = ii
+//   ii,_ = strconv.Atoi(fields[1])
+//   model.eventVocabulary = ii
+//   ii,_ = strconv.Atoi(fields[2])
+//   model.participantVocabulary = ii
+//   for idx, val := range(strings.Split(fields[3], ",")) {
+//     ii,_ = strconv.Atoi(val)
+//     model.eventtype_histogram[idx]=ii
+//   }
+//   for idx, val := range(strings.Split(fields[4], ",")) {
+//     ii,_ = strconv.Atoi(val)
+//     model.participanttype_histogram[idx]=ii
+//   }
+//   for idx, pIdx := 0, 0 ; idx<numTop*numPar && pIdx<numPar ; pIdx++ {
+//     model.participanttype_eventtype_histogram[pIdx]=newHistogram(numTop)
+//     events = strings.Split(fields[5], ",")[idx:idx+numTop]
+//     eventWords = strings.Split(fields[7], ",")[idx:idx+numTop]
+//     for ee, val := range(events) {
+//       ii,_=strconv.Atoi(val)
+//       fmt.Println(pIdx, ee, ii)
+//       model.participanttype_eventtype_histogram[pIdx][ee]=ii
+//     }
+//     idx=idx+numTop
+//   }
+//   return model
+// }
