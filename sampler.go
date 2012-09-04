@@ -37,7 +37,7 @@ func NewSampler(ePprior float64, eNprior float64, elmprior float64, pPprior floa
 
 func (sampler *Sampler)PickVariable(esd *ESD) {
   //select which random variable to resample; 0:t  1:v  2:rho
-  rr := rand.Intn(4)
+  rr := rand.Intn(3)
   if rr ==0 && esd.hasParticipants() {
     fmt.Println("Resampling P...\n")
     sampler.Resample_p(esd, Pick_participant(&esd.Label))

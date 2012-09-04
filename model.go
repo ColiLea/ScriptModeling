@@ -30,7 +30,7 @@ func NewModel() *Model {
 }
 
 
-func CreateModel (corpus *Corpus, topics int) *Model {
+func CreateModel (corpus *Corpus) *Model {
   model := NewModel()
   model.Initialize(corpus)
   return model

@@ -46,7 +46,7 @@ func (sampler *Sampler) Resample_v(esd *ESD, target int) {
   // update model & esd
   esd.V[target] = newV
   esd.Pi = computePi(esd.V)
-  esd.UpdateLabelingV()
+  esd.UpdateLabelingT()
   sampler.Model.invcount_histogram[target] += esd.V[target]
   if realized==true {
     sampler.Model.UpdateEventWordCounts(esd.Label, 1)

@@ -24,9 +24,10 @@ func (sampler *Sampler)Resample_rho() {
     cmd := exec.Command("octave", "-q")
     cmd.Dir = "/home/lea/Code/Octave/"
     cmd.Stdin = strings.NewReader(slicesampler)
-    
     out, err := cmd.Output()
-    fmt.Println("out",string(out))
+    
+    newRho,_ := strconv.ParseFloat(strings.Split(strings.TrimSpace(string(out)), " ")[3], 64)
+    sampler.rho[idx]=newRho
     if err != nil {
       fmt.Println(err)
     }

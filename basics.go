@@ -34,7 +34,6 @@ func getAccumulativeSample(distribution Distribution) int {
   sum := 0.0
   for _,val := range(distribution) {sum += val}
   for dIdx,_ := range(distribution) {distribution[dIdx] = distribution[dIdx]/sum}
-//   fmt.Println(distribution)
   // get sample
   distribution_sum := 0.0
   for _, v := range distribution {

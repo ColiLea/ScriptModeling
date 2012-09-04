@@ -2,7 +2,7 @@
 
 import "math/rand"
 import "math"
-// import "fmt"
+import "fmt"
 
 func (esd *ESD) hasParticipants() bool {
   // check whether there are any participants in the esd
@@ -25,6 +25,7 @@ func Pick_participant(label *Label) [2]int {
     }
   }
   target := rand.Intn(len(participants[:idx]))
+  fmt.Println("Resampling p=", participants , " for participanttype", participants[target])
   return participants[target]
 }
   

@@ -3,7 +3,7 @@ package scriptModeling
 import "fmt"
 
 type ESD struct {
-// Elemantary-Sequence-Description
+  // Elemantary-Sequence-Description
   Label Label
   Length int
   Tau [numTop]int
@@ -27,18 +27,18 @@ func (esd *ESD) Init() {
 }
 
 func (esd *ESD) ComputePi() {
-// Compute global labeling from V (inversion count vector)
+  // Compute global labeling from V (inversion count vector)
   esd.Pi[0] = numTop-1
   for j:=numTop-2; j>=0; j-- {
-   for i:=numTop-2; i>=esd.V[j]; i-- {
-     esd.Pi[i+1]=esd.Pi[i]
-   }
-   esd.Pi[esd.V[j]]=j
+    for i:=numTop-2; i>=esd.V[j]; i-- {
+      esd.Pi[i+1]=esd.Pi[i]
+    }
+    esd.Pi[esd.V[j]]=j
   }
 }
 
 func (esd *ESD) ComputeZ() {
-// Compute the ESD labeling from Tao (realization vector) and Pi (global labeling)
+  // Compute the ESD labeling from Tao (realization vector) and Pi (global labeling)
   esd.EventLabel=make([]int,len(esd.Label))
   event:=0
   for _,el := range(esd.Pi) {
@@ -55,17 +55,24 @@ func (esd *ESD) flipEvent(oldEvent int, newEvent int ) {
 }
 
 
-func (esd *ESD) UpdateLabelingT(oldVal int, newVal int) {
-    if oldVal != newVal {
-      esd.Label[newVal]=esd.Label[oldVal]
-      delete(esd.Label, oldVal)
-      esd.ComputeZ()
-    }
+func (esd *ESD) UpdateLabelingT() {
+  oldZ := esd.EventLabel
+  contents := make([]Content, len(oldZ))
+  esd.ComputeZ()
+  for idx, val := range(oldZ) {
+    contents[idx]=esd.Label[val]
+  }
+  esd.Label = Label{}
+  for idx, val := range(esd.EventLabel) {
+    esd.Label[val]=contents[idx]
+  }
 }
 
 func (esd *ESD) UpdateLabelingP(eventIdx int, oldVal int, newVal int) {
+  if oldVal != newVal {
     esd.Label[eventIdx].Participants[newVal]=esd.Label[eventIdx].Participants[oldVal]
     delete(esd.Label[eventIdx].Participants, oldVal)
+  }
 }
 
 func (esd *ESD) UpdateLabelingV() {
