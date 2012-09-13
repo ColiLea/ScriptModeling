@@ -3,7 +3,7 @@ package scriptModeling
 import "math"
 // import "fmt"
 
-func (model *Model) Generate(jPrior, lmPrior/* jlmPrior, ilmPrior*/ float64) *ESD {
+func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
   var wList []string
   rho := [numTop-1]float64{0.4, 0.2}
   esd := new(ESD)
@@ -27,7 +27,7 @@ func (model *Model) Generate(jPrior, lmPrior/* jlmPrior, ilmPrior*/ float64) *ES
     //Generate ordering
     vDist := make([]float64, numTop-jj)
     for vv:=0 ; vv<numTop-jj && jj<numTop-1 ; vv++ {
-      vDist[vv] = math.Abs(math.Exp(-rho[jj]*float64(vv))/((1.0-math.Exp(-(float64(numTop-jj+1))*rho[jj]))/1.0-math.Exp(-rho[jj])))
+      vDist[vv] = math.Exp(-rho[jj]*float64(vv+1))/((1.0-math.Exp(-(float64(numTop-jj+1))*rho[jj]))/(1.0-math.Exp(-rho[jj])))
     }
     if jj<numTop-1 {
       esd.V[jj]= getAccumulativeSample(vDist)

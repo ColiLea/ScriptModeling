@@ -21,6 +21,12 @@ type Content struct {
 
 type Corpus []*ESD
 
+func (corpus *Corpus) Init() {
+  for _,esd := range(*corpus) {
+    esd.Init()
+  }
+}
+
 func (esd *ESD) Init() {
   esd.ComputePi()
   esd.ComputeZ()

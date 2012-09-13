@@ -2,7 +2,7 @@
 
 import "math/rand"
 import "math"
-import "fmt"
+// import "fmt"
 
 func (esd *ESD) hasParticipants() bool {
   // check whether there are any participants in the esd
@@ -25,7 +25,7 @@ func Pick_participant(label *Label) [2]int {
     }
   }
   target := rand.Intn(len(participants[:idx]))
-  fmt.Println("Resampling p=", participants , " for participanttype", participants[target])
+//   fmt.Println("Resampling p=", participants , " for participanttype", participants[target])
   return participants[target]
 }
   
@@ -65,8 +65,14 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
   proposedLabels := make([]Label, len(alternatives))  
   // Decrement Counts
   sampler.Model.participanttype_histogram[target]--
+  if sampler.Model.participanttype_histogram[target]<0 {
+    panic("Negative Participant Count")
+  }
   sampler.Model.UpdateParticipantWordCounts(target, esd.Label[event].Participants[target], -1)
   sampler.Model.participanttype_eventtype_histogram[target][event]--
+  if sampler.Model.participanttype_eventtype_histogram[target][event]<0 {
+    panic("Negative Event Participant Count in resample_p")
+  }
   // Compute likelihood for every types
   distribution = make([]float64, len(alternatives))
   for idx, proposedP := range(alternatives) {

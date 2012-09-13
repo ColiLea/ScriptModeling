@@ -1,6 +1,6 @@
  package scriptModeling
 
-import "fmt"
+// import "fmt"
 import "math"
 import "math/rand"
 
@@ -13,7 +13,6 @@ type Sampler struct {
   participantlmPrior float64
   nu_0 float64
   v_0 [numTop-1]float64
-  rho [numTop-1]float64
   eventProbCache [][]float64
   Model Model
 }
@@ -29,26 +28,19 @@ func NewSampler(ePprior float64, eNprior float64, elmprior float64, pPprior floa
   sampler.participantlmPrior = plmprior
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)
   sampler.v_0 = vPrior(rho0)
-  // TODO this is wrong!!
-  sampler.rho = sampler.v_0
-  // TODO this is wrong!!
   return sampler
 }
 
 func (sampler *Sampler)PickVariable(esd *ESD) {
-  //select which random variable to resample; 0:t  1:v  2:rho
-  rr := rand.Intn(3)
-  if rr ==0 && esd.hasParticipants() {
-    fmt.Println("Resampling P...\n")
+//   select which random variable to resample; 0:t  1:v  2:rho
+  rr := rand.Intn(13)
+  if rr <= 3 && esd.hasParticipants() {
     sampler.Resample_p(esd, Pick_participant(&esd.Label))
-  } else if rr==1{
-    fmt.Println("Resampling V...\n")
+  } else if rr<=7{
     sampler.Resample_v(esd, pick_invcount(esd.V))
-  } else if rr==2{
-    fmt.Println("Resampling T...\n")
+  } else if rr<=11{
     sampler.Resample_t(esd, pick_event(esd.Tau))
   } else {
-    fmt.Println("Resampling Rho...\n")
     sampler.Resample_rho()
   }
 }
@@ -60,15 +52,5 @@ func vPrior (rho0 float64) [numTop-1]float64 {
   }
   return vPrior
 }
-
-
-// func (sampler *Sampler) InitializeRho() [numTop-1]int{
-// //    prob = -rho * (totalV + v_0 * nu_0) - (nu_0 + numDocs) * (log1p(-exp(-nminusj * rho)) - log1p(-exp(-rho)));
-//   var initRho [numTop-1]ints
-//   for i:=0 ; i<numTop-1 ; i++ {
-//     
-//   }
-// }
-
 
 

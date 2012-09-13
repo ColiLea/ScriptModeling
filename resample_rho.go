@@ -7,10 +7,11 @@ import "os/exec"
 import "strings"
 
 func (sampler *Sampler)Resample_rho() {
+//   fmt.Println("Resampling Rho")
   var v_0, nu_0 float64
   var totalV, numDocs, nminusj int
   var slicesampler string
-  for idx,target := range(sampler.rho) {
+  for idx,target := range(sampler.Model.rho) {
     lastRho := target
     target := idx
     totalV = sampler.Model.invcount_histogram[target]
@@ -27,7 +28,7 @@ func (sampler *Sampler)Resample_rho() {
     out, err := cmd.Output()
     
     newRho,_ := strconv.ParseFloat(strings.Split(strings.TrimSpace(string(out)), " ")[3], 64)
-    sampler.rho[idx]=newRho
+    sampler.Model.rho[idx]=newRho
     if err != nil {
       fmt.Println(err)
     }
