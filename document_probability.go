@@ -74,7 +74,7 @@
        // compute LGamma(N(word,part) + prior + update)
        wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+sampler.participantlmPrior+float64(update))
        wordFactor += wordTypeFactor
-       fmt.Println(i, term, update, histogram[i])
+       fmt.Println(i, term, update, histogram[i], typeWordTotal)
      }
      // normalize
      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
