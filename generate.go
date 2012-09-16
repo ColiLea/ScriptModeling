@@ -1,15 +1,18 @@
 package scriptModeling
 
 import "math"
+import "math/rand"
 // import "fmt"
 
 func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
   var wList []string
-  rho := [numTop-1]float64{0.4, 0.2}
+  modelTop := 3
+  modelPar := 3
+  rho := [2]float64{1.9, 1.9}
   esd := new(ESD)
   esd.Label = Label{}
   //Generate Eventtypes
-  for jj := 0 ; jj<numTop ; jj++ {
+  for jj := 0 ; jj<modelTop ; jj++ {
     jPos := (float64(model.eventtype_histogram[jj])+jPrior)/(float64(model.numESDs)+jPrior)
     jNeg := (float64(model.numESDs-model.eventtype_histogram[jj])+jPrior)/(float64(model.numESDs)+jPrior)
     esd.Tau[jj]=sample([]float64{jNeg,jPos})
@@ -17,7 +20,7 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
       esd.Length++
       esd.Label[jj]=Content{[]string{}, map[int][]string{}}
       //Generate Participants
-      for ii:=0 ; ii<numPar ; ii++ {
+      for ii:=0 ; ii<modelPar ; ii++ {
 	pPos := (float64(model.participanttype_eventtype_histogram[ii][jj])+jPrior)/(float64(model.participanttype_histogram[ii])+jPrior)
 	pNeg := (float64(model.participanttype_histogram[ii]-model.participanttype_eventtype_histogram[ii][jj])+jPrior)/(float64(model.participanttype_histogram[ii])+jPrior)
 	pp := sample([]float64{pNeg,pPos})
@@ -25,12 +28,13 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
       }
     }
     //Generate ordering
-    vDist := make([]float64, numTop-jj)
-    for vv:=0 ; vv<numTop-jj && jj<numTop-1 ; vv++ {
-      vDist[vv] = math.Exp(-rho[jj]*float64(vv+1))/((1.0-math.Exp(-(float64(numTop-jj+1))*rho[jj]))/(1.0-math.Exp(-rho[jj])))
+    vDist := make([]float64, modelTop-jj)
+    for vv:=0 ; vv<modelTop-jj && jj<modelTop-1 ; vv++ {
+      vDist[vv] = math.Exp(-rho[jj]*float64(vv+1))
     }
-    if jj<numTop-1 {
+    if jj<modelTop-1 {
       esd.V[jj]= getAccumulativeSample(vDist)
+//       fmt.Println(esd.V[jj])
     }
     esd.ComputePi()
     esd.ComputeZ()
@@ -67,16 +71,43 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
   return esd
 }
 
+func Randomize(esd ESD) (newESD ESD) {
+  idx:=0
+  newESD.Label = make(map[int]Content, len(esd.Label))
+  eIDs := rand.Perm(numTop)[:len(esd.Label)]
+  for _, val := range(esd.Label) {
+    pIDs := rand.Perm(numPar)[:len(val.Participants)]
+    pIdx:=0
+    content := Content{}
+    content.Words = val.Words
+    content.Participants = make(map[int][]string)
+    for _,part := range(val.Participants) {
+      content.Participants[pIDs[pIdx]]=part
+      pIdx++
+    }
+    newESD.Label[eIDs[idx]]=content
+    newESD.Tau[eIDs[idx]]=1
+    idx++
+  }
+  for idx:=0; idx<numTop-1;idx++ {
+    newESD.V[idx]=rand.Intn(numTop-idx)
+  }
+  newESD.Init()
+  return
+}
+
 func GetModel() *Model {
+  // 0:boil		1:add		2:serve
+  // 0:pasta		1:salt		2:water
   model := new(Model)
-  model.numESDs = 5
-  model.eventVocabulary = 3
-  model.participantVocabulary = 2
-  model.eventtype_histogram = Histogram{1,4,2}
-  model.participanttype_histogram = Histogram{4,2}
-  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{1,2,1}, 1:Histogram{0,1,1}}
-  model.word_eventtype_histogram = map[string]Histogram{"go":Histogram{0,2,1}, "read":Histogram{1,0,1}, "sing":Histogram{0,2,0}}
-  model.word_participanttype_histogram = map[string]Histogram{"lea":Histogram{3,1}, "dom":Histogram{1,1}}
-  model.invcount_histogram= Histogram{8,3}
+  model.numESDs = 20
+  model.eventVocabulary = 5
+  model.participantVocabulary = 3
+  model.eventtype_histogram = Histogram{15,20,20}
+  model.participanttype_histogram = Histogram{20,20,15}
+  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,5,15}, 1:Histogram{0,15,5}, 2:Histogram{15,0,0}}
+  model.word_eventtype_histogram = map[string]Histogram{"add":Histogram{0,20,0}, "serve":Histogram{0,0,20}, "boil":Histogram{15,0,0}}
+  model.word_participanttype_histogram = map[string]Histogram{"pasta":Histogram{20,0,0}, "water":Histogram{0,0,15},"salt":Histogram{0,20,0}}
+  model.invcount_histogram= Histogram{0,0}
   return model
 }

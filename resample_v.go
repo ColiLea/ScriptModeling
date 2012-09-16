@@ -1,12 +1,12 @@
  package scriptModeling
 
-//   import "fmt"
+  import "fmt"
   import "math/rand"
 
 
 func pick_invcount(v [numTop-1]int) int {
   newV := rand.Intn(len(v))
-//   fmt.Println("Resampling v=", v , " for eventtype", newV)
+  fmt.Println("Resampling v=", v , " for eventtype", newV)
   return newV
 }
 
@@ -32,7 +32,7 @@ func (sampler *Sampler) Resample_v(esd *ESD, target int) {
     distribution[k] = -sampler.Model.rho[target] * float64(k+1)
     // compute documentLikelihood if eventtype for which inv count is resampled is realized in esd
       proposedLabels[k] = UpdateLabelingV(esd.Tau, computePi(proposedV), esd.EventLabel, esd.Label)
-      documentLikelihood = sampler.documentLikelihood(proposedLabels[k])
+      documentLikelihood = sampler.documentLikelihood("event", proposedLabels[k])
       distribution[k]+=documentLikelihood
   }
   // sample new value

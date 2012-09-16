@@ -41,11 +41,11 @@ func ReadScenarios(file string) scriptIO.Scripts {
 func createESD (scenario scriptIO.Script) ESD {
   var esd ESD
   esd.Label = make(map[int]Content)
-  eIDs := rand.Perm(numTop-1)[:len(scenario.Item)]
+  eIDs := rand.Perm(numTop)[:len(scenario.Item)]
   for idx, event := range(scenario.Item) {
     esd.Label[eIDs[idx]] = Content{strings.Split(event.Text, " "), map[int][]string{}}
     esd.Tau[eIDs[idx]]=1
-    pIDs := rand.Perm(numPar-1)[:len(event.Participants)]
+    pIDs := rand.Perm(numPar)[:len(event.Participants)]
     for pIdx, part := range(event.Participants) {
       esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = strings.Split(part.Text, " ")
     }
@@ -56,7 +56,6 @@ func createESD (scenario scriptIO.Script) ESD {
   esd.Length=len(esd.Label)
   return esd
 }
-
 
 func (corpus Corpus) Store (fname string) {
         b := new(bytes.Buffer)

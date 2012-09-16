@@ -1,6 +1,6 @@
  package scriptModeling
 // 
-// import "fmt"
+import "fmt"
 import "math/rand"
 import "math"
 // 
@@ -11,7 +11,7 @@ func pick_event(tau [numTop]int) int {
     el = rand.Intn(len(tau))
     alt = tau[el]
   }
-//   fmt.Println("Resampling t=", tau , " for eventtype", el)
+  fmt.Println("Resampling t=", tau , " for eventtype", el)
   return el
 }
 
@@ -61,7 +61,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
 	docNormalize,_ = math.Lgamma(float64(sampler.Model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior+update)
 	lgamma += ((docPositive+docNegative)-docNormalize)
       }
-      documentLikelihood = sampler.documentLikelihood(tempESD.Label)
+      documentLikelihood = sampler.documentLikelihood("event", tempESD.Label)
       distribution[eIdx]=lgamma+documentLikelihood
       tempESDs[eIdx]=tempESD
       alts[eIdx]=tIdx
