@@ -1,6 +1,6 @@
  package scriptModeling
  
- import "fmt"
+//  import "fmt"
  import "math"
  
  func (sampler *Sampler) documentLikelihood(mode string, label Label) float64 {
@@ -56,30 +56,30 @@
    return documentLikelihood
  }
 
-  func (sampler *Sampler) documentLikelihoodP(target int, label Label) float64 {
-   var wordTypeFactor, wordFactor, wordNorm, documentLikelihood float64
+  func (sampler *Sampler) documentLikelihoodP(event int, participant int, label Label) float64 {
+   var wordTypeFactor, wordFactor, wordNorm float64
    var typeWordTotal, update, totalUpdate int
-   // iterate over eventtypes
+   documentLikelihood := 1.0
    // iterate over participanttypes
-   for i:=0 ; i<numPar ; i++ {
-     wordFactor = 0.0
+//    for i:=0 ; i<numPar ; i++ {
+     wordFactor = 1.0
      typeWordTotal = 0
      totalUpdate = 0
      // iterate over terms in participant vocab
      for term, histogram := range(sampler.Model.word_participanttype_histogram) {
-       typeWordTotal += histogram[i]
+       typeWordTotal += histogram[participant]
        update = 0
        // check if participanttype is realized as term and set 'update' accordingly
-       update = computeDelta(term, label[target].Participants[i])
+       update = computeDelta(term, label[event].Participants[participant])
+       totalUpdate += update
        // compute LGamma(N(word,part) + prior + update)
-       wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+sampler.participantlmPrior+float64(update))
-       wordFactor += wordTypeFactor
-       fmt.Println(i, term, update, histogram[i], typeWordTotal)
+       wordTypeFactor = math.Gamma(float64(histogram[participant])+sampler.participantlmPrior+float64(update))
+       wordFactor *= wordTypeFactor
      }
      // normalize
-     wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
-     documentLikelihood += (wordFactor - wordNorm)
-   }
+     wordNorm = math.Gamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
+     documentLikelihood *= (wordFactor / wordNorm)
+//    }
    return documentLikelihood
  }
 

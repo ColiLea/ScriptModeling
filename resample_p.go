@@ -55,8 +55,9 @@ func getAlternatives(participant int, label map[int][]string) []int {
 }
 
 func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
-  var lgamma, update, pPositive, pNegative, pNormalize, documentLikelihood float64
+  var lgamma, totalgamma, documentLikelihood, totaldoclikelihood, update, pPositive, pNegative, pNormalize float64
   var distribution []float64
+  var docLikelihoods []float64
   var newV int
   event := targets[0]
   target := targets[1]
@@ -75,6 +76,7 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
   }
   // Compute likelihood for every type
   distribution = make([]float64, len(alternatives))
+  docLikelihoods = make([]float64, len(alternatives))
   for idx, proposedP := range(alternatives) {
     if idx==0 {
       proposedLabels[idx]=esd.Label
@@ -97,11 +99,19 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
       pNormalize, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedP])+sampler.participantPosPrior+sampler.participantNegPrior+update)
       lgamma += ((pPositive+pNegative)-pNormalize)*/
     }
-    documentLikelihood = sampler.documentLikelihoodP(event, proposedLabels[idx])
-    fmt.Println(documentLikelihood)
-    distribution[idx]=lgamma+documentLikelihood
+    documentLikelihood = sampler.documentLikelihoodP(event, target, proposedLabels[idx])
+    distribution[idx]=lgamma
+    docLikelihoods[idx]=documentLikelihood
+    totaldoclikelihood += documentLikelihood
+    totalgamma += lgamma
   }
-  newV = getAccumulativeSample(distribution)
+  
+  //compute document likelihood
+  for idx,_ := range(distribution) {
+    distribution[idx] = (distribution[idx]/totalgamma) * (docLikelihoods[idx]/totaldoclikelihood)
+  }
+  fmt.Println(distribution)
+  newV = sample(distribution)
   fmt.Println(distribution)
   fmt.Println(newV, "  = eventtype", alternatives[newV])
   //update esd and model
