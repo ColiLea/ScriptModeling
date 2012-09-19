@@ -33,12 +33,12 @@ func NewSampler(ePprior float64, eNprior float64, elmprior float64, pPprior floa
 
 func (sampler *Sampler)PickVariable(esd *ESD) {
 //   select which random variable to resample; 0:t  1:v  2:rho
-  rr := rand.Intn(8)
-  if rr <= 3 && esd.hasParticipants() {
+  rr := rand.Intn(11)
+  if rr <=2 && esd.hasParticipants() {
     sampler.Resample_p(esd, Pick_participant(&esd.Label))
-  } else if rr<=7{
+  } else if rr<=5{
     sampler.Resample_t(esd, pick_event(esd.Tau))
-  } else if rr<=11 {
+  } else if rr<=8 {
     sampler.Resample_v(esd, pick_invcount(esd.V))
   } else {
     sampler.Resample_rho()

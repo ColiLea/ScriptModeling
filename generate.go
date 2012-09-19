@@ -101,13 +101,14 @@ func GetModel() *Model {
   // 0:pasta		1:salt		2:water
   model := new(Model)
   model.numESDs = 20
-  model.eventVocabulary = 5
+  model.eventVocabulary = 3
   model.participantVocabulary = 3
-  model.eventtype_histogram = Histogram{15,20,20}
-  model.participanttype_histogram = Histogram{20,20,15}
-  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,5,15}, 1:Histogram{0,15,5}, 2:Histogram{15,0,0}}
-  model.word_eventtype_histogram = map[string]Histogram{"add":Histogram{0,20,0}, "serve":Histogram{0,0,20}, "boil":Histogram{15,0,0}}
-  model.word_participanttype_histogram = map[string]Histogram{"pasta":Histogram{20,0,0}, "water":Histogram{0,0,15},"salt":Histogram{0,20,0}}
+  model.eventtype_histogram = Histogram{15,20,19}
+  model.participanttype_histogram = Histogram{19,20,15}
+  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,5,14}, 1:Histogram{0,15,5}, 2:Histogram{15,0,0}}
+  model.word_eventtype_histogram = map[string]Histogram{"add":Histogram{0,20,0}, "serve":Histogram{0,0,19}, "boil":Histogram{15,0,0}}
+  model.word_participanttype_histogram = map[string]Histogram{"pasta":Histogram{19,0,0}, "water":Histogram{0,0,15},"salt":Histogram{0,20,0}}
   model.invcount_histogram= Histogram{0,0}
+  model.rho = []float64{0.0,0.0}
   return model
 }

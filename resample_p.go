@@ -55,7 +55,7 @@ func getAlternatives(participant int, label map[int][]string) []int {
 }
 
 func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
-  var lgamma, totalgamma, documentLikelihood, totaldoclikelihood, update, pPositive, pNegative, pNormalize float64
+  var lgamma, distTotal, totalgamma, documentLikelihood, totaldoclikelihood, update, pPositive, pNegative, pNormalize float64
   var distribution []float64
   var docLikelihoods []float64
   var newV int
@@ -93,11 +93,6 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
       pNegative = math.Gamma(float64(sampler.Model.eventtype_histogram[event]-sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantNegPrior - update)
       pNormalize = math.Gamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior+update)
       lgamma *= ((pPositive*pNegative)/pNormalize)
-      /*
-      pPositive, _ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[proposedP][event]) + sampler.participantPosPrior + update)
-      pNegative, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedP]-sampler.Model.participanttype_eventtype_histogram[proposedP][event]) + sampler.participantNegPrior - update)
-      pNormalize, _ = math.Lgamma(float64(sampler.Model.participanttype_histogram[proposedP])+sampler.participantPosPrior+sampler.participantNegPrior+update)
-      lgamma += ((pPositive+pNegative)-pNormalize)*/
     }
     documentLikelihood = sampler.documentLikelihoodP(event, target, proposedLabels[idx])
     distribution[idx]=lgamma
@@ -108,12 +103,16 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
   
   //compute document likelihood
   for idx,_ := range(distribution) {
+     fmt.Println(distribution[idx]/totalgamma , docLikelihoods[idx]/totaldoclikelihood)
     distribution[idx] = (distribution[idx]/totalgamma) * (docLikelihoods[idx]/totaldoclikelihood)
+    distTotal += distribution[idx]
+  }
+  for idx,_ := range(distribution) {
+    distribution[idx]=distribution[idx]/distTotal
   }
   fmt.Println(distribution)
   newV = sample(distribution)
-  fmt.Println(distribution)
-  fmt.Println(newV, "  = eventtype", alternatives[newV])
+  fmt.Println(newV, "  = participanttype", alternatives[newV])
   //update esd and model
   esd.UpdateLabelingP(event, alternatives[len(alternatives)-1], alternatives[newV])
   sampler.Model.participanttype_histogram[alternatives[newV]]++
