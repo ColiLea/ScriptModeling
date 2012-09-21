@@ -92,6 +92,7 @@ func Randomize(esd ESD) (newESD ESD) {
   for idx:=0; idx<numTop-1;idx++ {
     newESD.V[idx]=rand.Intn(numTop-idx)
   }
+  newESD.Length = len(newESD.Label)
   newESD.Init()
   return
 }

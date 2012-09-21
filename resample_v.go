@@ -29,24 +29,23 @@ func (sampler *Sampler) Resample_v(esd *ESD, target int) {
   // try every possible value
   for k:=0 ; k<numTop-target ; k++ {
     proposedV[target]=k 
-    // NOTE: I am using the **unnormalized log of GMM(target; rho_target)** (Chen does the same!!)
     // NOTE: I am using 'k+1' below as my topicIDs start with 0 ...shouldn't matter, right???
-    gmm = math.Exp(-sampler.Model.rho[target] * float64(k+1))
+    gmm = -sampler.Model.rho[target] * float64(k+1)
     // compute documentLikelihood if eventtype for which inv count is resampled is realized in esd
       proposedLabels[k] = UpdateLabelingV(esd.Tau, computePi(proposedV), esd.EventLabel, esd.Label)
       documentLikelihood = sampler.documentLikelihood(proposedLabels[k])
       distribution[k] = gmm
       docLikelihoods[k]=documentLikelihood
-      totalgmm += gmm
-      totaldoclikelihood += documentLikelihood
+      totalgmm += math.Exp(gmm)
+      totaldoclikelihood += math.Exp(documentLikelihood)
   }
   for idx,_ := range(distribution) {
-    fmt.Println(distribution[idx]/totalgmm , docLikelihoods[idx]/totaldoclikelihood)
-    distribution[idx] = (distribution[idx]/totalgmm) * (docLikelihoods[idx]/totaldoclikelihood)
-    distTotal += distribution[idx]
+//     fmt.Println(math.Exp(distribution[idx])/totalgmm , math.Exp(docLikelihoods[idx])/totaldoclikelihood)
+    distribution[idx] = math.Log(math.Exp(distribution[idx])/totalgmm) + math.Log(math.Exp(docLikelihoods[idx])/totaldoclikelihood)
+    distTotal += math.Exp(distribution[idx])
   }
   for idx,_ := range(distribution) {
-    distribution[idx]=distribution[idx]/distTotal
+    distribution[idx]=math.Exp(distribution[idx])/distTotal
   }
   // sample new value
   newV = getAccumulativeSample(distribution)

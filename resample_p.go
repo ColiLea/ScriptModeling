@@ -89,26 +89,26 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
     for i:=0 ; i<numPar ; i++ {
       update = 0.0
       if i==proposedP {update = 1.0}
-      pPositive = math.Gamma(float64(sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantPosPrior + update)
-      pNegative = math.Gamma(float64(sampler.Model.eventtype_histogram[event]-sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantNegPrior - update)
-      pNormalize = math.Gamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior+update)
-      lgamma *= ((pPositive*pNegative)/pNormalize)
+      pPositive,_ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantPosPrior + update)
+      pNegative,_ = math.Lgamma(float64(sampler.Model.eventtype_histogram[event]-sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantNegPrior - update)
+      pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior+update)
+      lgamma += (pPositive+pNegative)-pNormalize
     }
     documentLikelihood = sampler.documentLikelihoodP(event, target, proposedLabels[idx])
     distribution[idx]=lgamma
     docLikelihoods[idx]=documentLikelihood
-    totaldoclikelihood += documentLikelihood
-    totalgamma += lgamma
+    totaldoclikelihood += math.Exp(documentLikelihood)
+    totalgamma += math.Exp(lgamma)
   }
   
   //compute document likelihood
   for idx,_ := range(distribution) {
-     fmt.Println(distribution[idx]/totalgamma , docLikelihoods[idx]/totaldoclikelihood)
-    distribution[idx] = (distribution[idx]/totalgamma) * (docLikelihoods[idx]/totaldoclikelihood)
-    distTotal += distribution[idx]
+//      fmt.Println(distribution[idx]/totalgamma , docLikelihoods[idx]/totaldoclikelihood)
+     distribution[idx] = math.Log(math.Exp(distribution[idx])/totalgamma) + math.Log(math.Exp(docLikelihoods[idx])/totaldoclikelihood)
+     distTotal += math.Exp(distribution[idx])
   }
   for idx,_ := range(distribution) {
-    distribution[idx]=distribution[idx]/distTotal
+    distribution[idx]=math.Exp(distribution[idx])/distTotal
   }
   fmt.Println(distribution)
   newV = sample(distribution)
