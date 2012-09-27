@@ -1,6 +1,6 @@
  package scriptModeling
  
-//  import "fmt"
+ import "fmt"
  import "math"
  
  func (sampler *Sampler) documentLikelihood(label Label) float64 {
@@ -26,18 +26,19 @@
 	 // compute LGamma(N(word,event) + prior + udpate)
 	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior+float64(update))
 	 wordFactor += wordTypeFactor
-// 	 wordTypeFactor = math.Gamma(float64(histogram[k])+sampler.eventlmPrior+float64(update))
-// 	 wordFactor *= wordTypeFactor
-// 	 fmt.Println(">", k, term, histogram[k]+update)
+	 
+	 // compute Normalization constant denominator
+// 	normTmp,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior) 
+// 	normDen += normTmp
        }
-
+       
        // normalize
        wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.eventVocabulary)*sampler.eventlmPrior + float64(len(label[k].Words)))
+//        normNum,_ = math.Lgamma(float64(typeWordTotal)+sampler.eventlmPrior)
        documentLikelihood += (wordFactor - wordNorm)
-//        wordNorm = math.Gamma(float64(typeWordTotal) + float64(sampler.Model.eventVocabulary)*sampler.eventlmPrior + float64(len(label[k].Words)))
-//        documentLikelihood *= (wordFactor / wordNorm)
-//        fmt.Println(">>>", typeWordTotal+len(label[k].Words), documentLikelihood, "\n")
+//        fmt.Println(">>>", documentLikelihood, "\n")
      }
+//      fmt.Println(">>", documentLikelihood)
    return documentLikelihood
  }
 
@@ -52,24 +53,20 @@
      totalUpdate = 0
      // iterate over terms in participant vocab
      for term, histogram := range(sampler.Model.word_participanttype_histogram) {
+//        fmt.Println(">", term, histogram[participant])
        typeWordTotal += histogram[participant]
-       update = 0
        // set 'update' according to the number of times term is present in current particip descr
        update = computeDelta(term, label[event].Participants[participant])
        totalUpdate += update
        // compute LGamma(N(word,part) + prior + update)
        wordTypeFactor,_ = math.Lgamma(float64(histogram[participant])+sampler.participantlmPrior+float64(update))
        wordFactor += wordTypeFactor
-//        wordTypeFactor = math.Gamma(float64(histogram[participant])+sampler.participantlmPrior+float64(update))
-//        wordFactor *= wordTypeFactor
-//        fmt.Println(">", histogram[participant]+update)
+       // compute denominator of normalizer
      }
      // normalize
      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
-     documentLikelihood += (wordFactor - wordNorm)
-//      wordNorm = math.Gamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
-//      documentLikelihood *= (wordFactor / wordNorm)
-//      fmt.Println(">>>", typeWordTotal+totalUpdate, documentLikelihood, "\n")
+      fmt.Println(wordFactor, wordNorm)
+     documentLikelihood += (wordFactor - wordNorm) 
    return documentLikelihood
  }
 

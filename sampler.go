@@ -28,6 +28,7 @@ func NewSampler(ePprior float64, eNprior float64, elmprior float64, pPprior floa
   sampler.participantlmPrior = plmprior
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)
   sampler.v_0 = vPrior(rho0)
+  sampler.Resample_rho()
   return sampler
 }
 

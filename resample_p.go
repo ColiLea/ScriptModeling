@@ -91,19 +91,20 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
       if i==proposedP {update = 1.0}
       pPositive,_ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantPosPrior + update)
       pNegative,_ = math.Lgamma(float64(sampler.Model.eventtype_histogram[event]-sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantNegPrior - update)
-      pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior+update)
-      lgamma += (pPositive+pNegative)-pNormalize
+      pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior)
+      lgamma += ((pPositive+pNegative)-pNormalize)
+      fmt.Println(">>", (pPositive+pNegative), pNormalize)
     }
     documentLikelihood = sampler.documentLikelihoodP(event, target, proposedLabels[idx])
     distribution[idx]=lgamma
     docLikelihoods[idx]=documentLikelihood
     totaldoclikelihood += math.Exp(documentLikelihood)
     totalgamma += math.Exp(lgamma)
+    
   }
-  
-  //compute document likelihood
+  fmt.Println(distribution, totalgamma)
+  fmt.Println(docLikelihoods, totaldoclikelihood)
   for idx,_ := range(distribution) {
-//      fmt.Println(distribution[idx]/totalgamma , docLikelihoods[idx]/totaldoclikelihood)
      distribution[idx] = math.Log(math.Exp(distribution[idx])/totalgamma) + math.Log(math.Exp(docLikelihoods[idx])/totaldoclikelihood)
      distTotal += math.Exp(distribution[idx])
   }

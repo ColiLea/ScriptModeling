@@ -79,7 +79,6 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   tempESDs=tempESDs[:eIdx]
   alts=alts[:eIdx]
   for idx,_ := range(distribution) {
-//     fmt.Println(math.Exp(distribution[idx])/totalgamma , math.Exp(docLikelihoods[idx])/totaldoclikelihood)
     distribution[idx] = math.Log(math.Exp(distribution[idx])/totalgamma) + math.Log(math.Exp(docLikelihoods[idx])/totaldoclikelihood)
     distTotal+=math.Exp(distribution[idx])
   }
