@@ -60,6 +60,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
 	docPositive,_ = math.Lgamma(float64(sampler.Model.eventtype_histogram[k])+sampler.eventPosPrior+update)
 	docNegative,_ = math.Lgamma(float64(sampler.Model.numESDs-sampler.Model.eventtype_histogram[k])+sampler.eventNegPrior-update)
 	docNormalize,_ = math.Lgamma(float64(sampler.Model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior)
+	fmt.Println("T:PNS", sampler.Model.eventtype_histogram[k], sampler.Model.numESDs-sampler.Model.eventtype_histogram[k], sampler.Model.numESDs)
 	lgamma += ((docPositive+docNegative)-docNormalize)
       }
       documentLikelihood = sampler.documentLikelihood(tempESD.Label)

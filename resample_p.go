@@ -90,10 +90,11 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
       update = 0.0
       if i==proposedP {update = 1.0}
       pPositive,_ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantPosPrior + update)
-      pNegative,_ = math.Lgamma(float64(sampler.Model.eventtype_histogram[event]-sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantNegPrior - update)
+      pNegative,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantNegPrior - update)
       pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior)
+      fmt.Println("P:PNS", sampler.Model.participanttype_eventtype_histogram[i][event], sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][event], sampler.Model.participanttype_histogram[i])
       lgamma += ((pPositive+pNegative)-pNormalize)
-      fmt.Println(">>", (pPositive+pNegative), pNormalize)
+//       fmt.Println(">>", (pPositive+pNegative), pNormalize)
     }
     documentLikelihood = sampler.documentLikelihoodP(event, target, proposedLabels[idx])
     distribution[idx]=lgamma
