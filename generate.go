@@ -2,7 +2,7 @@ package scriptModeling
 
 import "math"
 import "math/rand"
-import "fmt"
+// import "fmt"
 
 func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
   var wList []string
@@ -133,7 +133,6 @@ func Randomize(esd ESD) (newESD ESD) {
       newPi = append(newPi[:insert], append([]int{el},newPi[insert:]...)...)
     }
     for idx,el := range(newPi) {
-      fmt.Println(idx)
       newESD.Pi[idx]=el
     }
   }

@@ -55,7 +55,7 @@ func getAlternatives(participant int, label map[int][]string) []int {
 }
 
 func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
-  var lgamma, distTotal, totalgamma, documentLikelihood, totaldoclikelihood, update, pPositive, pNegative, pNormalize float64
+  var lgamma, distTotal, totalgamma, documentLikelihood, totaldoclikelihood, update, pPositive, pNegative, pNormalize, pmax, dmax, distMax float64
   var distribution []float64
   var docLikelihoods []float64
   var newV int
@@ -85,32 +85,31 @@ func (sampler *Sampler) Resample_p(esd *ESD, targets [2]int) {
       proposedLabels[idx]=esd.Label
     }
     target=alternatives[idx]
-    lgamma = 1.0
+    lgamma = 0.0
     for i:=0 ; i<numPar ; i++ {
       update = 0.0
       if i==proposedP {update = 1.0}
       pPositive,_ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantPosPrior + update)
       pNegative,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][event]) + sampler.participantNegPrior - update)
       pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior)
-      fmt.Println("P:PNS", sampler.Model.participanttype_eventtype_histogram[i][event], sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][event], sampler.Model.participanttype_histogram[i])
       lgamma += ((pPositive+pNegative)-pNormalize)
-//       fmt.Println(">>", (pPositive+pNegative), pNormalize)
     }
     documentLikelihood = sampler.documentLikelihoodP(event, target, proposedLabels[idx])
     distribution[idx]=lgamma
     docLikelihoods[idx]=documentLikelihood
-    totaldoclikelihood += math.Exp(documentLikelihood)
-    totalgamma += math.Exp(lgamma)
-    
   }
-  fmt.Println(distribution, totalgamma)
-  fmt.Println(docLikelihoods, totaldoclikelihood)
+  
+  pmax, totalgamma = computeNorm(distribution)
+  dmax, totaldoclikelihood = computeNorm(docLikelihoods)
+  
+  fmt.Println(targets[1], distribution, totalgamma)
+  fmt.Println(targets[1], docLikelihoods, totaldoclikelihood)
   for idx,_ := range(distribution) {
-     distribution[idx] = math.Log(math.Exp(distribution[idx])/totalgamma) + math.Log(math.Exp(docLikelihoods[idx])/totaldoclikelihood)
-     distTotal += math.Exp(distribution[idx])
+     distribution[idx] = math.Log(math.Exp(distribution[idx]-pmax)/totalgamma) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
   }
+  distMax,distTotal = computeNorm(distribution)
   for idx,_ := range(distribution) {
-    distribution[idx]=math.Exp(distribution[idx])/distTotal
+    distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
   }
   fmt.Println(distribution)
   newV = sample(distribution)

@@ -14,7 +14,7 @@ func pick_invcount(v [numTop-1]int) int {
 func (sampler *Sampler) Resample_v(esd *ESD, target int) {
   var proposedV [numTop-1]int
   var newV int
-  var documentLikelihood, gmm, distTotal, totalgmm, totaldoclikelihood float64
+  var documentLikelihood, gmm, distTotal, totalgmm, totaldoclikelihood, gmax, dmax, distMax float64
   proposedLabels := make([]Label, numTop-target)
   sampler.Model.UpdateEventWordCounts(esd.Label, -1, "v", target)
   sampler.Model.UpdateEventParticipantCountsAll(esd.Label, -1)
@@ -36,16 +36,18 @@ func (sampler *Sampler) Resample_v(esd *ESD, target int) {
       documentLikelihood = sampler.documentLikelihood(proposedLabels[k])
       distribution[k] = gmm
       docLikelihoods[k]=documentLikelihood
-      totalgmm += math.Exp(gmm)
-      totaldoclikelihood += math.Exp(documentLikelihood)
   }
+  
+  gmax, totalgmm = computeNorm(distribution)
+  dmax, totaldoclikelihood = computeNorm(docLikelihoods)
+  
   for idx,_ := range(distribution) {
 //     fmt.Println(math.Exp(distribution[idx])/totalgmm , math.Exp(docLikelihoods[idx])/totaldoclikelihood)
-    distribution[idx] = math.Log(math.Exp(distribution[idx])/totalgmm) + math.Log(math.Exp(docLikelihoods[idx])/totaldoclikelihood)
-    distTotal += math.Exp(distribution[idx])
+    distribution[idx] = math.Log(math.Exp(distribution[idx]-gmax)/totalgmm) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
   }
+  distMax, distTotal = computeNorm(distribution)
   for idx,_ := range(distribution) {
-    distribution[idx]=math.Exp(distribution[idx])/distTotal
+    distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
   }
   // sample new value
   newV = getAccumulativeSample(distribution)

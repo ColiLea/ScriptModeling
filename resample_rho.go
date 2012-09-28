@@ -20,13 +20,13 @@ func (sampler *Sampler)Resample_rho() {
     numDocs = sampler.Model.numESDs
     nminusj = numTop-target
 
-    slicesampler = getSliceSampler([]string{"1", "3", "@logposterior", strconv.FormatFloat(lastRho, 'f', -1 , 64), "5", "false", strconv.Itoa(totalV), strconv.FormatFloat(v_0, 'f', -1, 64), strconv.FormatFloat(nu_0, 'f', -1, 64), strconv.Itoa(numDocs), strconv.Itoa(nminusj)})    
+    slicesampler = getSliceSampler([]string{"1", "3", "@logposterior", strconv.FormatFloat(lastRho, 'f', -1 , 64), "5", "false", strconv.Itoa(totalV), strconv.FormatFloat(v_0, 'f', -1, 64), strconv.FormatFloat(nu_0, 'f', -1, 64), strconv.Itoa(numDocs), strconv.Itoa(nminusj)})
 
     cmd := exec.Command("octave", "-q")
+//     cmd.Dir = "../sliceSample/"
     cmd.Dir = "/home/lea/Code/Octave/"
     cmd.Stdin = strings.NewReader(slicesampler)
     out, err := cmd.Output()
-    
     newRho,_ := strconv.ParseFloat(strings.Split(strings.TrimSpace(string(out)), " ")[3], 64)
     sampler.Model.rho[idx]=newRho
     if err != nil {

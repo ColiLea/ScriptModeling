@@ -30,7 +30,7 @@ func newTargets(tau [numTop]int, target int) []int {
 
 
 func (sampler *Sampler) Resample_t(esd *ESD, target int) {
-  var update, lgamma, totalgamma, totaldoclikelihood, distTotal, documentLikelihood, docPositive, docNegative, docNormalize float64
+  var update, lgamma, totalgamma, totaldoclikelihood, distTotal, documentLikelihood, docPositive, docNegative, docNormalize, tmax, dmax, distMax float64
   var newLabel int
   // decrement counts for current target event, and all words in ESD
   sampler.Model.eventtype_histogram[target]--
@@ -53,21 +53,19 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
 	tempESD.flipEvent(target, tIdx)
 	tempESD.UpdateLabelingT()
       }
-      lgamma = 1.0
+      lgamma = 0.0
       for k:=0 ; k<numTop ; k++ {
 	update=0.0
 	if k==tIdx {update=1.0}
 	docPositive,_ = math.Lgamma(float64(sampler.Model.eventtype_histogram[k])+sampler.eventPosPrior+update)
 	docNegative,_ = math.Lgamma(float64(sampler.Model.numESDs-sampler.Model.eventtype_histogram[k])+sampler.eventNegPrior-update)
 	docNormalize,_ = math.Lgamma(float64(sampler.Model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior)
-	fmt.Println("T:PNS", sampler.Model.eventtype_histogram[k], sampler.Model.numESDs-sampler.Model.eventtype_histogram[k], sampler.Model.numESDs)
+// 	fmt.Println("T:PNS", sampler.Model.eventtype_histogram[k], sampler.Model.numESDs-sampler.Model.eventtype_histogram[k], sampler.Model.numESDs)
 	lgamma += ((docPositive+docNegative)-docNormalize)
       }
       documentLikelihood = sampler.documentLikelihood(tempESD.Label)
       distribution[eIdx]=lgamma
       docLikelihoods[eIdx]=documentLikelihood
-      totaldoclikelihood += math.Exp(documentLikelihood)
-      totalgamma += math.Exp(lgamma)
 
       tempESDs[eIdx]=tempESD
       alts[eIdx]=tIdx
@@ -79,12 +77,18 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   docLikelihoods=docLikelihoods[:eIdx]
   tempESDs=tempESDs[:eIdx]
   alts=alts[:eIdx]
+  
+  tmax, totalgamma = computeNorm(distribution)
+  dmax, totaldoclikelihood = computeNorm(docLikelihoods)
+  
+  fmt.Println(distribution, totalgamma)
+  fmt.Println(docLikelihoods, totaldoclikelihood)
   for idx,_ := range(distribution) {
-    distribution[idx] = math.Log(math.Exp(distribution[idx])/totalgamma) + math.Log(math.Exp(docLikelihoods[idx])/totaldoclikelihood)
-    distTotal+=math.Exp(distribution[idx])
+    distribution[idx] = math.Log(math.Exp(distribution[idx]-tmax)/totalgamma) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
   }
+  distMax, distTotal = computeNorm(distribution)
   for idx,_ := range(distribution) {
-    distribution[idx] = math.Exp(distribution[idx])/distTotal
+    distribution[idx] = math.Exp(distribution[idx]-distMax)/distTotal
   }
   // sample new label
   newLabel = sample(distribution)

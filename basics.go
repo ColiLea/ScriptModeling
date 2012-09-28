@@ -1,5 +1,6 @@
  package scriptModeling
 
+import "math"
 import "math/rand"
 // import "fmt"
 
@@ -49,6 +50,24 @@ func getAccumulativeSample(distribution Distribution) int {
   }
   return -1;
 }
+
+
+func computeNorm(dist []float64) (max, norm float64) {
+//   for _,v := range(dist) {
+//     norm += math.Exp(v)
+//   }
+  max=0.0
+  for _,v := range(dist) {
+    if v > max {
+      max=v
+    }
+  }
+  for _,v := range(dist) {
+    norm += math.Exp(v-max)
+  }
+  return
+}
+
 
 func computePi(v [numTop-1]int) [numTop]int {
 // Compute global labeling from V (inversion count vector)
@@ -113,19 +132,3 @@ func UpdateLabelingV(tau [numTop]int, pi [numTop]int, eventLabel []int, label La
   }
   return newLabel
 }
-
-/*
-func updateLabelingP(event int, oldVal int, newVal int, label Label) Label {
-  newLabel := make(Label, len(label))
-  if oldVal == newVal {
-    return label
-  }
-  for k,v := range(label) {
-    newLabel[k]=v
-  }
-  if _,ok := label[event].Participants[oldVal] ; ok {
-    newLabel[event].Participants[newVal]=newLabel[event].Participants[oldVal]
-  }
-  delete(newLabel[event].Participants, oldVal)
-  return newLabel
-}*/

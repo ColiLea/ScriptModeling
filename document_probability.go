@@ -8,10 +8,10 @@
    // all participant labelings will stay constant -> no need to compute them!
    var wordTypeFactor, wordFactor, wordNorm float64
    var typeWordTotal, update int
-   documentLikelihood := 1.0
+   documentLikelihood := 0.0
    // iterate over eventtypes
      for k := 0 ; k<numTop ; k++ {
-       wordFactor = 1.0
+       wordFactor = 0.0
        typeWordTotal = 0
 
        // iterate over terms in event-vocab
@@ -26,15 +26,10 @@
 	 // compute LGamma(N(word,event) + prior + udpate)
 	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior+float64(update))
 	 wordFactor += wordTypeFactor
-	 
-	 // compute Normalization constant denominator
-// 	normTmp,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior) 
-// 	normDen += normTmp
-       }
+	 }
        
        // normalize
        wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.eventVocabulary)*sampler.eventlmPrior + float64(len(label[k].Words)))
-//        normNum,_ = math.Lgamma(float64(typeWordTotal)+sampler.eventlmPrior)
        documentLikelihood += (wordFactor - wordNorm)
 //        fmt.Println(">>>", documentLikelihood, "\n")
      }
@@ -47,8 +42,8 @@
   // other participants & all event doc likelihoods will stay constant w.r.t. change -> no need to compute them!
    var wordTypeFactor, wordFactor, wordNorm float64
    var typeWordTotal, update, totalUpdate int
-   documentLikelihood := 1.0
-     wordFactor = 1.0
+   documentLikelihood := 0.0
+     wordFactor = 0.0
      typeWordTotal = 0
      totalUpdate = 0
      // iterate over terms in participant vocab
@@ -61,12 +56,12 @@
        // compute LGamma(N(word,part) + prior + update)
        wordTypeFactor,_ = math.Lgamma(float64(histogram[participant])+sampler.participantlmPrior+float64(update))
        wordFactor += wordTypeFactor
-       // compute denominator of normalizer
      }
      // normalize
      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(totalUpdate))
       fmt.Println(wordFactor, wordNorm)
-     documentLikelihood += (wordFactor - wordNorm) 
+     documentLikelihood += (wordFactor - wordNorm)
+//      fmt.Println(">>>", participant, (wordFactor-wordNorm), documentLikelihood, math.Exp(documentLikelihood), "\n")
    return documentLikelihood
  }
 
