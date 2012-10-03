@@ -1,17 +1,20 @@
  package scriptModeling
 
-  import "fmt"
+//   import "fmt"
   import "math/rand"
   import "math"
 
 
 func pick_invcount(v [numTop-1]int) int {
   newV := rand.Intn(len(v))
-  fmt.Println("Resampling v=", v , " for eventtype", newV)
+//   fmt.Println("Resampling v=", v , " for eventtype", newV)
   return newV
 }
 
-func (sampler *Sampler) Resample_v(esd *ESD, target int) {
+func (sampler *Sampler) Resample_v(esd *ESD/*, target int*/) {
+//   fmt.Println("Resampling v=", esd.V)
+  for target, _ := range(esd.V) {
+//     fmt.Println(" ...for eventtype", target)
   var proposedV [numTop-1]int
   var newV int
   var documentLikelihood, gmm, distTotal, totalgmm, totaldoclikelihood, gmax, dmax, distMax float64
@@ -42,7 +45,6 @@ func (sampler *Sampler) Resample_v(esd *ESD, target int) {
   dmax, totaldoclikelihood = computeNorm(docLikelihoods)
   
   for idx,_ := range(distribution) {
-//     fmt.Println(math.Exp(distribution[idx])/totalgmm , math.Exp(docLikelihoods[idx])/totaldoclikelihood)
     distribution[idx] = math.Log(math.Exp(distribution[idx]-gmax)/totalgmm) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
   }
   distMax, distTotal = computeNorm(distribution)
@@ -53,11 +55,12 @@ func (sampler *Sampler) Resample_v(esd *ESD, target int) {
   newV = getAccumulativeSample(distribution)
   // update model & esd
   esd.V[target] = newV
-  fmt.Println(distribution)
-  fmt.Println(newV, "  = ordering", esd.V)
+//   fmt.Println(distribution)
+//   fmt.Println(newV, "  = ordering", esd.V)
   esd.Pi = computePi(esd.V)
   esd.UpdateLabelingT()
   sampler.Model.invcount_histogram[target] += esd.V[target]
   sampler.Model.UpdateEventWordCounts(esd.Label, 1, "v", target)
   sampler.Model.UpdateEventParticipantCountsAll(esd.Label, 1)
+  }
 }

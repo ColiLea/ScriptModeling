@@ -5,10 +5,12 @@ import "math/rand"
 // import "fmt"
 
 func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
+  var numPWords int
   var wList []string
-  modelTop := 3
-  modelPar := 4
-  rho := [2]float64{1.9, 1.9}
+  const modelTop int = 3
+  const modelPar int = 3
+  rho := [2]float64{5.9, 5.9}
+  tmpPtau := [numPar]int{}
   esd := new(ESD)
   esd.Label = Label{}
   //Generate Eventtypes
@@ -18,13 +20,18 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
     esd.Tau[jj]=sample([]float64{jNeg,jPos})
     if esd.Tau[jj] ==1 {
       esd.Length++
-      esd.Label[jj]=Content{[]string{}, map[int][]string{}}
+      esd.Label[jj]=Content{[]string{}, map[int][]string{}, tmpPtau}
       //Generate Participants
       for ii:=0 ; ii<modelPar ; ii++ {
 	pPos := (float64(model.participanttype_eventtype_histogram[ii][jj])+jPrior)/(float64(model.participanttype_histogram[ii])+jPrior)
 	pNeg := (float64(model.participanttype_histogram[ii]-model.participanttype_eventtype_histogram[ii][jj])+jPrior)/(float64(model.participanttype_histogram[ii])+jPrior)
 	pp := sample([]float64{pNeg,pPos})
-	if pp == 1 {esd.Label[jj].Participants[ii] = []string{}}
+	if pp == 1 {
+	  esd.Label[jj].Participants[ii] = []string{}
+	}
+      }
+      for pIdx,_ := range(esd.Label[jj].Participants) {
+	tmpPtau[pIdx]=1
       }
     }
     //Generate ordering
@@ -43,9 +50,9 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
     wList = []string{}
     numEWords := rand.Intn(2)+1
     for i:=0 ; i<numEWords ; i++ {
-    wDist := make([]float64, model.eventVocabulary)
-    words := make([]string, model.eventVocabulary)
-    idx:=0
+      wDist := make([]float64, model.eventVocabulary)
+      words := make([]string, model.eventVocabulary)
+      idx:=0
       for term,dist := range(model.word_eventtype_histogram) {
 	words[idx]=term
 	wDist[idx]=(float64(dist[eID])+lmPrior)
@@ -54,19 +61,26 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
       ww := getAccumulativeSample(wDist)
       wList = append(wList, words[ww])
     }
-    esd.Label[eID] = Content{wList, esd.Label[eID].Participants}
+    esd.Label[eID] = Content{wList, esd.Label[eID].Participants, esd.Label[eID].Tau}
     for pID, _ := range(event.Participants) {
-      idx:=0
       wList := []string{}
-      wDist := make([]float64, model.participantVocabulary)
-      words := make([]string, model.participantVocabulary)
-      for term,dist := range(model.word_participanttype_histogram) {
-	words[idx]=term
-	wDist[idx]=(float64(dist[pID])+lmPrior)
-	idx++
+      if pID == 2 {
+	numPWords = rand.Intn(2)+1
+      } else {
+	numPWords =1
       }
-      pp := getAccumulativeSample(wDist)
-      wList = append(wList, words[pp])
+      for j:=0 ; j<numPWords ; j++ {
+	idx:=0
+	wDist := make([]float64, model.participantVocabulary)
+	words := make([]string, model.participantVocabulary)
+	for term,dist := range(model.word_participanttype_histogram) {
+	  words[idx]=term
+	  wDist[idx]=(float64(dist[pID])+lmPrior)
+	  idx++
+	}
+	pp := getAccumulativeSample(wDist)
+	wList = append(wList, words[pp])
+      }
       esd.Label[eID].Participants[pID]=wList
     }
   }
@@ -79,6 +93,7 @@ func Randomize(esd ESD) (newESD ESD) {
   newESD.Label = make(map[int]Content, len(esd.Label))
   eIDs := rand.Perm(numTop)[:len(esd.Label)]
   for _, val := range(esd.Label) {
+    tmpPtau := [numPar]int{}
     pIDs := rand.Perm(numPar)[:len(val.Participants)]
     pIdx:=0
     content := Content{}
@@ -86,8 +101,10 @@ func Randomize(esd ESD) (newESD ESD) {
     content.Participants = make(map[int][]string)
     for _,part := range(val.Participants) {
       content.Participants[pIDs[pIdx]]=part
+      tmpPtau[pIDs[pIdx]]=1
       pIdx++
     }
+    content.Tau = tmpPtau
     newESD.Label[eIDs[idx]]=content
     newESD.Tau[eIDs[idx]]=1
     idx++
@@ -120,7 +137,7 @@ func Randomize(esd ESD) (newESD ESD) {
     for ii:=0 ; ii<numTop ; ii++ {
       found := false
       for _,v := range(newESD.EventLabel) {
-        if ii==v {
+	if ii==v {
 	  found = true
 	}
       }
@@ -137,7 +154,6 @@ func Randomize(esd ESD) (newESD ESD) {
     }
   }
   newESD.Length = len(newESD.Label)
-//   newESD.Init()
   return
 }
 
@@ -146,70 +162,14 @@ func GetModel() *Model {
   // 0:pasta		1:salt		2:water
   model := new(Model)
   model.numESDs = 20
-  model.eventVocabulary = 7
-  model.participantVocabulary = 5
-  model.eventtype_histogram = Histogram{15,20,19}
-  model.participanttype_histogram = Histogram{19,20,15,10}
-  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,0,19}, 1:Histogram{0,20,0}, 2:Histogram{15,0,0}, 3:Histogram{10,0,0}}
-  model.word_eventtype_histogram = map[string]Histogram{"add":Histogram{0,12,0}, "serve":Histogram{0,0,19}, "hot":Histogram{0,0,5}, "boil":Histogram{10,0,0}, "heat":Histogram{5,0,0}, "quickly":Histogram{5,0,0}, "put":Histogram{0,8,0}}
-  model.word_participanttype_histogram = map[string]Histogram{"pot":Histogram{0,0,0,10}, "pasta":Histogram{10,0,0,0}, "noodles":Histogram{9,0,0,0}, "water":Histogram{0,0,15,0},"salt":Histogram{0,20,0,0}}
+  model.eventVocabulary = 3
+  model.participantVocabulary = 4
+  model.eventtype_histogram = Histogram{20,15,20}
+  model.participanttype_histogram = Histogram{20,20,20}
+  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,0,20}, 1:Histogram{0,15,0}, 2:Histogram{20,0,0}}
+  model.word_eventtype_histogram = map[string]Histogram{"add":Histogram{0,15,0}, "serve":Histogram{0,0,20}, "heat":Histogram{20,0,0}}
+  model.word_participanttype_histogram = map[string]Histogram{"pasta":Histogram{10,0,0}, "noodles":Histogram{10,0,0}, "water":Histogram{0,0,15},"salt":Histogram{0,20,0}}
   model.invcount_histogram= Histogram{0,0}
   model.rho = []float64{0.0,0.0}
   return model
 }
-
-
-
-
-
-//     for idx,val := range(newESD.EventLabel) {
-//       newESD.Pi[idx] = val
-//     }
-//     for i:=0 ; i<numTop ; i++ {
-//       found := false
-//       for _,el := range newESD.EventLabel {
-// 	if i==el {
-// 	  found = true
-// 	}
-//       }
-//       if found == false {
-// 	newESD.Pi[numTop-1]=i
-//       }
-//     }
-//   }
-
-
-//   lIdx := 0
-//   for idx, label := range(newESD.EventLabel) {
-//     lIdx = rand.Intn(numTop-lIdx)+lIdx 
-//     newESD.Pi[lIdx]=label
-//   }
-//   var others []int
-//   for ii:=0 ; ii<numTop ; ii++ {
-//     found := false
-//     for _,v := range(newESD.Pi) {
-//       if ii == v {
-// 	found=true
-//       }
-//     }
-//     if found==false {
-//       others = append(others,ii)
-//     }
-//   }
-//   perm := rand.Perm(others)
-//   for _,v := range(perm) {
-//     for idx,_ := range(newESD.Pi) {
-//       if newESD.Pi[idx]==0 {
-// 	newESD.Pi[idx]=v
-//       }
-//     }
-//   }
-//   for idx,id := range(newESD.Pi) {
-//     if id < numTop-1{
-//       for tidx:=0 ; tidx<idx ; tidx++ {
-// 	if newESD.Pi[tidx]>id {
-// 	  newESD.V[id]++
-// 	}
-//       }
-//     }
-//   }

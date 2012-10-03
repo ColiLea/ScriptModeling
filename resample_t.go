@@ -1,6 +1,6 @@
  package scriptModeling
 // 
-import "fmt"
+// import "fmt"
 import "math/rand"
 import "math"
 // 
@@ -11,7 +11,7 @@ func pick_event(tau [numTop]int) int {
     el = rand.Intn(len(tau))
     alt = tau[el]
   }
-  fmt.Println("Resampling t=", tau , " for eventtype", el)
+//   fmt.Println("Resampling t=", tau , " for eventtype", el)
   return el
 }
 
@@ -50,7 +50,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
     if val==0 || tIdx==target {
       tempESD := *esd
       if val ==0 {
-	tempESD.flipEvent(target, tIdx)
+	tempESD.flip(target, tIdx)
 	tempESD.UpdateLabelingT()
       }
       lgamma = 0.0
@@ -81,8 +81,6 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   tmax, totalgamma = computeNorm(distribution)
   dmax, totaldoclikelihood = computeNorm(docLikelihoods)
   
-  fmt.Println(distribution, totalgamma)
-  fmt.Println(docLikelihoods, totaldoclikelihood)
   for idx,_ := range(distribution) {
     distribution[idx] = math.Log(math.Exp(distribution[idx]-tmax)/totalgamma) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
   }
@@ -92,8 +90,8 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   }
   // sample new label
   newLabel = sample(distribution)
-  fmt.Println(distribution)
-  fmt.Println(newLabel, "  = eventtype", alts[newLabel])
+//   fmt.Println(distribution)
+//   fmt.Println(newLabel, "  = eventtype", alts[newLabel])
   // update model & esd
    *esd = tempESDs[newLabel]
    sampler.Model.eventtype_histogram[alts[newLabel]]++

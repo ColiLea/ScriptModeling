@@ -2,8 +2,8 @@ package scriptModeling
 
 import "fmt"
 
-const numTop int = 15
-const numPar int = 15
+const numTop int = 6
+const numPar int = 3
 
 type Model struct {
 // Model type, Contains all priors; eventhistogram=counts of events; eventInvcounthistogram:eventspecific inversioncounts; wordEventhistogram:wordspecific eventcounts

@@ -17,6 +17,7 @@ type Label map[int]Content
 type Content struct {
   Words []string
   Participants map[int][]string
+  Tau [numPar]int
 }
 
 type Corpus []*ESD
@@ -55,9 +56,20 @@ func (esd *ESD) ComputeZ() {
   }
 }
 
-func (esd *ESD) flipEvent(oldEvent int, newEvent int ) {
+func (esd *ESD) flip(oldEvent int, newEvent int) {
+//   fmt.Println("$", oldEvent, newEvent)
+//   fmt.Println("$", esd.Tau)
   esd.Tau[oldEvent]=0
   esd.Tau[newEvent]=1
+//   fmt.Println("$", esd.Tau)
+}
+
+func (esd *ESD) flipp(oldPart int, newPart int, eID int ) {
+  tmpTau := esd.Label[eID].Tau
+  tmpTau[oldPart]=0
+  tmpTau[newPart]=1
+  content := Content{esd.Label[eID].Words, esd.Label[eID].Participants, tmpTau}
+  esd.Label[eID] = content
 }
 
 
@@ -101,14 +113,32 @@ func (esd *ESD) UpdateLabelingV() {
   }
 }
 
+func (esd *ESD) Copy() (newESD ESD) {
+  newESD.Label = Label{}
+  newESD.Length = esd.Length
+  newESD.Tau = esd.Tau
+  newESD.Pi = esd.Pi
+  newESD.V = esd.V
+  newESD.EventLabel = esd.EventLabel
+  for key,_ := range(esd.Label) {
+    tmpP := make(map[int][]string, len(esd.Label[key].Participants))
+    for pkey, pVal := range(esd.Label[key].Participants) {
+      tmpP[pkey] = pVal
+    }
+    newESD.Label[key]=Content{esd.Label[key].Words, tmpP, esd.Label[key].Tau}
+  }
+  return
+}
 
-func (esd *ESD) Print() { 
+
+func (esd *ESD) Print() {
   fmt.Println("Labeling")
   for eID,ev := range(esd.Label) {
     fmt.Println(eID, ev.Words)
     for pID, w := range(ev.Participants) {
       fmt.Println("    ", pID, w)
     }
+    fmt.Println("    ", ev.Tau)
   }
   fmt.Println("\nTau : ", esd.Tau)
   fmt.Println("V   : ", esd.V)

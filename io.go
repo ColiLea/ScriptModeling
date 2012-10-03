@@ -30,8 +30,8 @@ func ReadScenarios(file string) scriptIO.Scripts {
   var sc scriptIO.Scripts
   xmlFile, err := ioutil.ReadFile(file)
   if err != nil {
-    fmt.Println(err)
     panic("Error opening file:")
+    fmt.Println(err)
   }
   xml.Unmarshal(xmlFile, &sc)
   return sc
@@ -40,12 +40,17 @@ func ReadScenarios(file string) scriptIO.Scripts {
 
 func createESD (scenario scriptIO.Script) ESD {
   var esd ESD
+  var tmpPtao [numPar]int
   esd.Label = make(map[int]Content)
   eIDs := rand.Perm(numTop)[:len(scenario.Item)]
   for idx, event := range(scenario.Item) {
-    esd.Label[eIDs[idx]] = Content{strings.Split(event.Text, " "), map[int][]string{}}
-    esd.Tau[eIDs[idx]]=1
+    tmpPtao = [numPar]int{}
     pIDs := rand.Perm(numPar)[:len(event.Participants)]
+    for _, id := range(pIDs) {
+      tmpPtao[id]=1
+    }
+    esd.Label[eIDs[idx]] = Content{strings.Split(event.Text, " "), map[int][]string{}, tmpPtao}
+    esd.Tau[eIDs[idx]]=1
     for pIdx, part := range(event.Participants) {
       esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = strings.Split(part.Text, " ")
     }
