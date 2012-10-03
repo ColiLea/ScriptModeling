@@ -80,7 +80,6 @@
 	   pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior)
 	   lgamma += ((pPositive+pNegative)-pNormalize)
 	 }
-	 fmt.Println(idx, tempESD.Label[eventID].Participants[idx])
 	 documentLikelihood = sampler.documentLikelihoodP(eventID, idx, tempESD.Label)
 	 distribution[eIdx]=lgamma
 	 docLikelihoods[eIdx]=documentLikelihood
@@ -97,8 +96,6 @@
      
      pmax, totalgamma = computeNorm(distribution)
      dmax, totaldoclikelihood = computeNorm(docLikelihoods)
-     
-     fmt.Println(docLikelihoods)
      
      for idx,_ := range(distribution) {
        distribution[idx] = math.Log(math.Exp(distribution[idx]-pmax)/totalgamma) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)

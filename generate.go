@@ -128,34 +128,44 @@ func Randomize(esd ESD) (newESD ESD) {
       newESD.Pi[idx] = val
     }
   } else {
-    newPi := make([]int, len(newESD.EventLabel))
-    for idx,val := range(newESD.EventLabel) {
-      newPi[idx] = val
-    }
-    // get diff
-    var others []int
-    for ii:=0 ; ii<numTop ; ii++ {
-      found := false
-      for _,v := range(newESD.EventLabel) {
-	if ii==v {
-	  found = true
-	}
-      }
-      if found==false {
-	others = append(others,ii)
-      }
-    }
-    for _, el := range(others) {
-      insert := rand.Intn(len(newPi))
-      newPi = append(newPi[:insert], append([]int{el},newPi[insert:]...)...)
-    }
+    newPi := createOrdering(newESD.EventLabel)
     for idx,el := range(newPi) {
       newESD.Pi[idx]=el
     }
   }
+  newESD.ComputeV()
   newESD.Length = len(newESD.Label)
   return
 }
+
+func createOrdering(label []int) []int {
+  others := getDiffList(label)
+  pi := make([]int, len(label))
+    for idx,val := range(label) {
+      pi[idx] = val
+    }
+    for _, el := range(others) {
+      insert := rand.Intn(len(pi))
+      pi = append(pi[:insert], append([]int{el},pi[insert:]...)...)
+    }
+  return pi
+}
+
+func getDiffList(eLabel []int) (dList []int) {
+  for ii:=0 ; ii<numTop ; ii++ {
+    found := false
+    for _,v := range(eLabel) {
+      if ii==v {
+	found = true
+      }
+    }
+    if found==false {
+      dList = append(dList,ii)
+    }
+  }
+  return
+}
+
 
 func GetModel() *Model {
   // 0:boil,heat	1:add		2:serve

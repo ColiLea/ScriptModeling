@@ -56,6 +56,22 @@ func (esd *ESD) ComputeZ() {
   }
 }
 
+func (esd *ESD) ComputeV() {
+  // Compute the inversion counts V from Pi (global labeling)
+//   esd.V = make([]int,numTop-1)
+  for idx,el := range(esd.Pi) {
+    if el < numTop-1 {
+      invCount := 0
+      for vIdx:=0 ; vIdx<idx ; vIdx++ {
+	if esd.Pi[vIdx]>el {
+	  invCount++
+	}
+      }
+      esd.V[el]=invCount
+    }
+  }
+}
+
 func (esd *ESD) flip(oldEvent int, newEvent int) {
 //   fmt.Println("$", oldEvent, newEvent)
 //   fmt.Println("$", esd.Tau)

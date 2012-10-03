@@ -1,6 +1,6 @@
  package scriptModeling
  
- import "fmt"
+//  import "fmt"
  import "math"
  
  func (sampler *Sampler) documentLikelihood(label Label) float64 {
@@ -53,12 +53,10 @@
         // compute LGamma(N(word,part) + prior + update)
         wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+sampler.participantlmPrior+float64(update))
         wordFactor += wordTypeFactor
-        fmt.Println("!", i, term, wordTypeFactor, histogram[i], update)
       }
       // normalize
       wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(len(label[event].Participants[participant])))
       documentLikelihood += (wordFactor - wordNorm)
-      fmt.Println("!!", wordFactor, wordNorm)
      }
    return documentLikelihood
  }
