@@ -33,6 +33,7 @@
  func (sampler *Sampler) Resample_p(esd *ESD, eventID int) {
    var pIdx int
    participants := make([]int, len(esd.Label[eventID].Participants))
+   fmt.Println(esd.Label[eventID], esd.Label[eventID].Tau)
    for idx,val := range(esd.Label[eventID].Tau) {
      if val==1 {
        participants[pIdx]=idx

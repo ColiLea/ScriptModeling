@@ -11,7 +11,6 @@ import "path"
 import "strings"
 import "math/rand"
 
-
 func GetCorpus (xmlDir string) (Corpus) {
   contents,_ := ioutil.ReadDir(xmlDir)
   corpus := Corpus{}
@@ -42,24 +41,57 @@ func createESD (scenario scriptIO.Script) ESD {
   var esd ESD
   var tmpPtao [numPar]int
   esd.Label = make(map[int]Content)
+  esd.EventLabel = make([]int, len(scenario.Item))
+  // generate event labels
   eIDs := rand.Perm(numTop)[:len(scenario.Item)]
   for idx, event := range(scenario.Item) {
+    eWords := removeStopWords(strings.Split(event.Text, " "))
+    if len(eWords) > 0 || len(event.Participants)>0 {
+    esd.EventLabel[idx]=eIDs[idx]
+    esd.Tau[eIDs[idx]]=1
+    // generate participant labels
     tmpPtao = [numPar]int{}
     pIDs := rand.Perm(numPar)[:len(event.Participants)]
     for _, id := range(pIDs) {
       tmpPtao[id]=1
     }
-    esd.Label[eIDs[idx]] = Content{strings.Split(event.Text, " "), map[int][]string{}, tmpPtao}
-    esd.Tau[eIDs[idx]]=1
-    for pIdx, part := range(event.Participants) {
-      esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = strings.Split(part.Text, " ")
+      esd.Label[eIDs[idx]] = Content{eWords, map[int][]string{}, tmpPtao}
+      for pIdx, part := range(event.Participants) {
+	pWords := removeStopWords(strings.Split(part.Text, " "))
+	if len(pWords) > 0 {
+	  esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = pWords
+	}
+      }
     }
   }
-  for idx:=0; idx<numTop-1;idx++ {
-    esd.V[idx]=rand.Intn(numTop-idx)
+  // generate ordering under word-order constraint
+  newPi := createOrdering(esd.EventLabel)
+  for idx,el := range(newPi) {
+    esd.Pi[idx]=el
   }
+  esd.ComputeV()
   esd.Length=len(esd.Label)
   return esd
+}
+
+func removeStopWords(full []string) []string {
+  stopWordList := []string{"a", "able", "about", "across", "after", "all", "almost", "also", "am", "among", "an", "and", "any", "are", "as", "at", "be", "because", "been", "but", "by", "can", "cannot", "could", "dear", "did", "do", "does", "either", "else", "ever", "every", "for", "from", "got", "had", "has", "have", "he", "her", "hers", "him", "his", "how", "however", "i", "if", "in", "into", "is", "it", "its", "just", "least", "let", "like", "likely", "may", "me", "might", "most", "must", "my", "neither", "no", "nor", "not", "of", "off", "often", "on", "only", "or", "other", "our", "own", "rather", "she", "should", "since", "so", "some", "than", "that", "the", "their", "them", "then", "there", "these", "they", "this", "tis", "to", "too", "twas", "us", "wants", "was", "we", "were", "what", "when", "where", "which", "while", "who", "whom", "why", "will", "with", "would", "yet", "you", "your", "s", "."}
+  clean := make([]string, len(full))
+  var idx int
+  var add bool
+  for _, word := range(full) {
+    add=true
+    for _, stop := range(stopWordList) {
+      if word == stop {
+	add=false
+      }
+    }
+    if add==true {
+      clean[idx]=word
+      idx++
+    }
+  }
+  return clean[:idx]
 }
 
 func (corpus Corpus) Store (fname string) {
