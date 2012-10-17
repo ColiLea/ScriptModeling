@@ -2,7 +2,7 @@
  
  import "math/rand"
  import "math"
- import "fmt"
+//  import "fmt"
  
  func (esd *ESD) hasParticipants() bool {
    // check whether there are any participants in the esd
@@ -25,7 +25,7 @@
      }
    }
    target := rand.Intn(len(events[:idx]))
-   fmt.Println("Resampling for participants in eventtype", events[target], "=", label[events[target]].Participants)
+//    fmt.Println("Resampling for participants in eventtype", events[target], "=", label[events[target]].Participants)
    return events[target]
  }
  
@@ -33,7 +33,6 @@
  func (sampler *Sampler) Resample_p(esd *ESD, eventID int) {
    var pIdx int
    participants := make([]int, len(esd.Label[eventID].Participants))
-   fmt.Println(esd.Label[eventID], esd.Label[eventID].Tau)
    for idx,val := range(esd.Label[eventID].Tau) {
      if val==1 {
        participants[pIdx]=idx
@@ -48,7 +47,7 @@
      var newV int
      target := pID
      eIdx := 0
-     fmt.Println("...participant type", target)
+//      fmt.Println("...participant type", target)
      // Decrement Counts
      sampler.Model.participanttype_histogram[target]--
      sampler.Model.participanttype_eventtype_histogram[target][eventID]--
@@ -106,8 +105,8 @@
        distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
      }
      newV = sample(distribution)
-     fmt.Println(distribution)
-     fmt.Println(newV, "  = participanttype", alts[newV])
+//      fmt.Println(distribution)
+//      fmt.Println(newV, "  = participanttype", alts[newV])
      //update esd and model
      *esd = tempESDs[newV]
      //      esd.UpdateLabelingP(eventID, alternatives[len(alternatives)-1], alternatives[newV])

@@ -47,14 +47,11 @@ func createESD (scenario scriptIO.Script) ESD {
   for idx, event := range(scenario.Item) {
     eWords := removeStopWords(strings.Split(event.Text, " "))
     if len(eWords) > 0 || len(event.Participants)>0 {
-    esd.EventLabel[idx]=eIDs[idx]
-    esd.Tau[eIDs[idx]]=1
-    // generate participant labels
-    tmpPtao = [numPar]int{}
-    pIDs := rand.Perm(numPar)[:len(event.Participants)]
-    for _, id := range(pIDs) {
-      tmpPtao[id]=1
-    }
+      esd.EventLabel[idx]=eIDs[idx]
+      esd.Tau[eIDs[idx]]=1
+      // generate participant labels
+      tmpPtao = [numPar]int{}
+      pIDs := rand.Perm(numPar)[:len(event.Participants)]
       esd.Label[eIDs[idx]] = Content{eWords, map[int][]string{}, tmpPtao}
       for pIdx, part := range(event.Participants) {
 	pWords := removeStopWords(strings.Split(part.Text, " "))
@@ -62,6 +59,10 @@ func createESD (scenario scriptIO.Script) ESD {
 	  esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = pWords
 	}
       }
+      for key, _ := range(esd.Label[eIDs[idx]].Participants) {
+	tmpPtao[key]=1
+      }
+      esd.Label[eIDs[idx]] = Content{eWords, esd.Label[eIDs[idx]].Participants, tmpPtao}
     }
   }
   // generate ordering under word-order constraint
