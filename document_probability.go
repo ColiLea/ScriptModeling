@@ -3,9 +3,10 @@
 //  import "fmt"
  import "math"
  
+ 
+ // compute document likelihood of the events in the current esd
+ // all participant labelings will stay constant -> no need to compute them!
  func (sampler *Sampler) documentLikelihood(label Label) float64 {
-   // compute document likelihood of the events in the current esd
-   // all participant labelings will stay constant -> no need to compute them!
    var wordTypeFactor, wordFactor, wordNorm float64
    var typeWordTotal, update int
    documentLikelihood := 0.0
@@ -25,16 +26,17 @@
 	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior+float64(update))
 	 wordFactor += wordTypeFactor
 	 }
-       // normalize
+       // normalize LGamma(N(words_by_event) + V*prior + total_update)
        wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.eventVocabulary)*sampler.eventlmPrior + float64(len(label[k].Words)))
        documentLikelihood += (wordFactor - wordNorm)
      }
    return documentLikelihood
  }
 
-  func (sampler *Sampler) documentLikelihoodP(event int, participant int, label Label) float64 {
+ 
   // compute document likelihood of the participant realization in question, given the proposed label
   // all event doc likelihoods will stay constant w.r.t. change -> no need to compute them!
+  func (sampler *Sampler) documentLikelihoodP(event int, participant int, label Label) float64 {
    var wordTypeFactor, wordFactor, wordNorm float64
    var typeWordTotal, update int
    documentLikelihood := 0.0

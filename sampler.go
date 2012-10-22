@@ -13,8 +13,13 @@ type Sampler struct {
   participantlmPrior float64
   nu_0 float64
   v_0 [numTop-1]float64
-  eventProbCache [][]float64
+  lmHyperPrior Normal
   Model Model
+}
+
+type Normal struct {
+  Mean []float64
+  Variance [][]float64
 }
 
 func NewSampler(ePprior float64, eNprior float64, elmprior float64, pPprior float64, pNprior float64, plmprior float64, rho0 float64, nu0 float64, model Model) *Sampler {
@@ -28,12 +33,14 @@ func NewSampler(ePprior float64, eNprior float64, elmprior float64, pPprior floa
   sampler.participantlmPrior = plmprior
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)
   sampler.v_0 = vPrior(rho0)
+  sampler.lmHyperPrior = hyperPrior(model.word_eventtype_histogram, model.word_participanttype_histogram)
   sampler.Resample_rho()
   return sampler
 }
 
-func (sampler *Sampler)PickVariable(esd *ESD) {
+
 //   select which random variable to resample; 0:t  1:v  2:rho
+func (sampler *Sampler)PickVariable(esd *ESD) {	
   rr := rand.Intn(11)
   if rr <=2 && esd.hasParticipants() {
     sampler.Resample_p(esd, Pick_participant(esd.Label))
@@ -54,4 +61,8 @@ func vPrior (rho0 float64) [numTop-1]float64 {
   return vPrior
 }
 
-
+func hyperPrior(eVocab map[string]Histogram, pVocab map[string]Histogram) (normal Normal) {
+  normal.Variance = getCovarianceMatrix(eVocab, pVocab)
+  normal.Mean = make([]float64, len(eVocab)+len(pVocab))
+  return
+}

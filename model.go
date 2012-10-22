@@ -2,11 +2,11 @@ package scriptModeling
 
 import "fmt"
 
-const numTop int = 30
-const numPar int = 60
+const numTop int = 10
+const numPar int = 10
 
-type Model struct {
 // Model type, Contains all priors; eventhistogram=counts of events; eventInvcounthistogram:eventspecific inversioncounts; wordEventhistogram:wordspecific eventcounts
+type Model struct {
   eventtype_histogram Histogram
   participanttype_histogram Histogram
   participanttype_eventtype_histogram map[int]Histogram	//key=participanttype
@@ -79,7 +79,7 @@ func (model *Model) Initialize(corpus *Corpus) {
   model.participantVocabulary = len(model.word_participanttype_histogram)
 }
 
-func (model *Model) UpdateEventWordCounts(label Label, count int, variable string, target int) {
+func (model *Model) UpdateEventWordCounts(label Label, count int) {
    for eID, event := range(label) {
      for _, word := range(event.Words) {
        model.word_eventtype_histogram[word][eID]+=count
@@ -99,7 +99,7 @@ func (model *Model) UpdateParticipantWordCounts(target int, words []string, coun
   }
 }
 
-func (model *Model) UpdateEventParticipantCountsAll(label Label, count int) {
+func (model *Model) UpdateEventParticipantCounts(label Label, count int) {
   for eID, event := range(label) {
     for pID,_ := range(event.Participants) {
       model.participanttype_eventtype_histogram[pID][eID]+=count

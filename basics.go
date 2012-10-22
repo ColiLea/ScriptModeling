@@ -11,9 +11,8 @@ func newHistogram(topics int) Histogram {
   return make([]int, topics)
 }
 
-
+// samples from a normalized distribution; returns the INDEX of the value sampled
 func sample(distribution []float64) int {
-  // samples from a normalized distribution; returns the INDEX of the value sampled
   distribution_sum := 0.0
   for _, v := range distribution {
     distribution_sum += v
@@ -29,8 +28,9 @@ func sample(distribution []float64) int {
   return -1;
 }
 
+
+// samples from an unnormalized distribution; (1) normalizes (2)returns the INDEX of the value sampled
 func getAccumulativeSample(distribution Distribution) int {
-  // samples from an unnormalized distribution; (1) normalizes (2)returns the INDEX of the value sampled
   // normalize
   sum := 0.0
   for _,val := range(distribution) {sum += val}
@@ -53,9 +53,6 @@ func getAccumulativeSample(distribution Distribution) int {
 
 
 func computeNorm(dist []float64) (max, norm float64) {
-//   for _,v := range(dist) {
-//     norm += math.Exp(v)
-//   }
   max=0.0
   for _,v := range(dist) {
     if v > max {
@@ -68,9 +65,8 @@ func computeNorm(dist []float64) (max, norm float64) {
   return
 }
 
-
-func computePi(v [numTop-1]int) [numTop]int {
 // Compute global labeling from V (inversion count vector)
+func computePi(v [numTop-1]int) [numTop]int {
   var pi [numTop]int
   pi[0] = numTop-1
   for j:=numTop-2; j>=0; j-- {
@@ -82,8 +78,9 @@ func computePi(v [numTop-1]int) [numTop]int {
   return pi
 }
 
-func computeZ(tao [numTop]int, pi [numTop]int) []int{
+
 // Compute the ESD labeling from Tao (realization vector) and Pi (global labeling)
+func computeZ(tao [numTop]int, pi [numTop]int) []int{
   label := make([]int,numTop)
   event:=0
   for _,el := range(pi) {

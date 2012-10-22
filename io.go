@@ -10,6 +10,7 @@ import "encoding/xml"
 import "path"
 import "strings"
 import "math/rand"
+import "stemmer"
 
 func GetCorpus (xmlDir string) (Corpus) {
   contents,_ := ioutil.ReadDir(xmlDir)
@@ -45,7 +46,7 @@ func createESD (scenario scriptIO.Script) ESD {
   // generate event labels
   eIDs := rand.Perm(numTop)[:len(scenario.Item)]
   for idx, event := range(scenario.Item) {
-    eWords := removeStopWords(strings.Split(event.Text, " "))
+    eWords := preProcess(strings.Split(event.Text, " "))
     if len(eWords) > 0 || len(event.Participants)>0 {
       esd.EventLabel[idx]=eIDs[idx]
       esd.Tau[eIDs[idx]]=1
@@ -54,7 +55,7 @@ func createESD (scenario scriptIO.Script) ESD {
       pIDs := rand.Perm(numPar)[:len(event.Participants)]
       esd.Label[eIDs[idx]] = Content{eWords, map[int][]string{}, tmpPtao}
       for pIdx, part := range(event.Participants) {
-	pWords := removeStopWords(strings.Split(part.Text, " "))
+	pWords := preProcess(strings.Split(part.Text, " "))
 	if len(pWords) > 0 {
 	  esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = pWords
 	}
@@ -75,7 +76,9 @@ func createESD (scenario scriptIO.Script) ESD {
   return esd
 }
 
-func removeStopWords(full []string) []string {
+
+//function for stopwordremoval, trimming and stemming (for the latter using external code by ...)
+func preProcess(full []string) []string {
   stopWordList := []string{"a", "able", "about", "across", "after", "all", "almost", "also", "am", "among", "an", "and", "any", "are", "as", "at", "be", "because", "been", "but", "by", "can", "cannot", "could", "dear", "did", "do", "does", "either", "else", "ever", "every", "for", "from", "got", "had", "has", "have", "he", "her", "hers", "him", "his", "how", "however", "i", "if", "in", "into", "is", "it", "its", "just", "least", "let", "like", "likely", "may", "me", "might", "most", "must", "my", "neither", "no", "nor", "not", "of", "off", "often", "on", "only", "or", "other", "our", "own", "rather", "she", "should", "since", "so", "some", "than", "that", "the", "their", "them", "then", "there", "these", "they", "this", "tis", "to", "too", "twas", "us", "wants", "was", "we", "were", "what", "when", "where", "which", "while", "who", "whom", "why", "will", "with", "would", "yet", "you", "your", "s", "."}
   clean := make([]string, len(full))
   var idx int
@@ -92,7 +95,12 @@ func removeStopWords(full []string) []string {
       idx++
     }
   }
-  return clean[:idx]
+  clean = clean[:idx]
+  for idx, _ := range(clean) {
+    clean[idx] = strings.Trim(clean[idx], `.,!?'"-:(){}[]#$@%^&*_+=`)
+    clean[idx] = string(stemmer.Stem([]byte(clean[idx])))
+  }
+  return clean
 }
 
 func (corpus Corpus) Store (fname string) {

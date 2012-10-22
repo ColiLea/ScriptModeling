@@ -1,11 +1,12 @@
  package scriptModeling
-// 
+
 // import "fmt"
 import "math/rand"
 import "math"
-// 
+
+
+//randomly select the event we want to resample
 func pick_event(tau [numTop]int) int {
-  //randomly select the event we want to resample
   var el int
   for alt:=0 ; alt!=1; {
     el = rand.Intn(len(tau))
@@ -32,13 +33,14 @@ func newTargets(tau [numTop]int, target int) []int {
 func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   var update, lgamma, totalgamma, totaldoclikelihood, distTotal, documentLikelihood, docPositive, docNegative, docNormalize, tmax, dmax, distMax float64
   var newLabel int
-  // decrement counts for current target event, and all words in ESD
+  // decrement counts for current target event, and ALL words in ESD, and ALL event-participant counts
+  // ALL, since event order might change due to fixed v (ordering)
   sampler.Model.eventtype_histogram[target]--
+  sampler.Model.UpdateEventWordCounts(esd.Label, -1)
+  sampler.Model.UpdateEventParticipantCounts(esd.Label, -1)
   if sampler.Model.eventtype_histogram[target]<0 {
     panic("Negative Event Count in resample_t")
   }
-  sampler.Model.UpdateEventWordCounts(esd.Label, -1, "t", target)
-  sampler.Model.UpdateEventParticipantCountsAll(esd.Label, -1)
   // compute switch-likelihood
   distribution := make([]float64, numTop)
   docLikelihoods := make([]float64, numTop)
@@ -90,11 +92,9 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   }
   // sample new label
   newLabel = sample(distribution)
-//   fmt.Println(distribution)
-//   fmt.Println(newLabel, "  = eventtype", alts[newLabel])
   // update model & esd
    *esd = tempESDs[newLabel]
    sampler.Model.eventtype_histogram[alts[newLabel]]++
-   sampler.Model.UpdateEventWordCounts(esd.Label, 1, "t", target)
-   sampler.Model.UpdateEventParticipantCountsAll(esd.Label, 1)
+   sampler.Model.UpdateEventWordCounts(esd.Label, 1)
+   sampler.Model.UpdateEventParticipantCounts(esd.Label, 1)
 }

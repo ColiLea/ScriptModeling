@@ -4,8 +4,9 @@
  import "math"
 //  import "fmt"
  
+ 
+ // check whether there are any participants in the esd
  func (esd *ESD) hasParticipants() bool {
-   // check whether there are any participants in the esd
    for _,event := range(esd.Label) {
      if len(event.Participants) > 0 {
        return true
@@ -14,8 +15,9 @@
    return false
  }
  
+ 
+ // Pick a random participant type to resample from the esd labeling
  func Pick_participant(label Label) int {
-   // Pick a random participant type to resample from the esd labeling
    events := make([]int, numTop*numPar)
    var idx int
    for eID, event := range(label) {
@@ -51,10 +53,10 @@
      // Decrement Counts
      sampler.Model.participanttype_histogram[target]--
      sampler.Model.participanttype_eventtype_histogram[target][eventID]--
+     sampler.Model.UpdateParticipantWordCounts(target, esd.Label[eventID].Participants[target], -1)
      if sampler.Model.participanttype_histogram[target]<0 {
        panic("Negative Participant Count")
      }
-     sampler.Model.UpdateParticipantWordCounts(target, esd.Label[eventID].Participants[target], -1)
      if sampler.Model.participanttype_eventtype_histogram[target][eventID]<0 {
        panic("Negative Event Participant Count in resample_p")
      }
@@ -107,36 +109,11 @@
      newV = sample(distribution)
 //      fmt.Println(distribution)
 //      fmt.Println(newV, "  = participanttype", alts[newV])
+     
      //update esd and model
      *esd = tempESDs[newV]
-     //      esd.UpdateLabelingP(eventID, alternatives[len(alternatives)-1], alternatives[newV])
      sampler.Model.participanttype_histogram[alts[newV]]++
      sampler.Model.participanttype_eventtype_histogram[alts[newV]][eventID]++
      sampler.Model.UpdateParticipantWordCounts(alts[newV], esd.Label[eventID].Participants[alts[newV]], 1)
    }
  }
- 
-//   func getAlternatives(participant int, label map[int][]string) []int {
-//    // Get alternative participant types ; TODO: ugly function!!
-//    var add bool
-//    idx := 1
-//    alts := make([]int, numPar-len(label)+1)
-//    alts[0] = participant
-//    for ii:=0 ; ii<numPar ; ii++ {
-//      add=false
-//      if ii!= alts[0] {
-//        add=true
-//        for pID,_ := range(label) {
-// 	 if pID==ii {
-// 	   add=false
-// 	   break
-// 	 }
-//        }
-//      }
-//      if add == true {
-//        alts[idx]=ii
-//        idx++
-//      }
-//    }
-//    return alts
-//  }

@@ -2,8 +2,9 @@ package scriptModeling
 
 import "fmt"
 
+
+// Elemantary-Sequence-Description
 type ESD struct {
-  // Elemantary-Sequence-Description
   Label Label
   Length int
   Tau [numTop]int
@@ -33,8 +34,9 @@ func (esd *ESD) Init() {
   esd.ComputeZ()
 }
 
+
+// Compute global labeling from V (inversion count vector)
 func (esd *ESD) ComputePi() {
-  // Compute global labeling from V (inversion count vector)
   esd.Pi[0] = numTop-1
   for j:=numTop-2; j>=0; j-- {
     for i:=numTop-2; i>=esd.V[j]; i-- {
@@ -44,8 +46,9 @@ func (esd *ESD) ComputePi() {
   }
 }
 
+
+// Compute the ESD labeling from Tao (realization vector) and Pi (global labeling)
 func (esd *ESD) ComputeZ() {
-  // Compute the ESD labeling from Tao (realization vector) and Pi (global labeling)
   esd.EventLabel=make([]int,len(esd.Label))
   event:=0
   for _,el := range(esd.Pi) {
@@ -56,9 +59,9 @@ func (esd *ESD) ComputeZ() {
   }
 }
 
+
+// Compute the inversion counts V from Pi (global labeling)
 func (esd *ESD) ComputeV() {
-  // Compute the inversion counts V from Pi (global labeling)
-//   esd.V = make([]int,numTop-1)
   for idx,el := range(esd.Pi) {
     if el < numTop-1 {
       invCount := 0
@@ -73,11 +76,8 @@ func (esd *ESD) ComputeV() {
 }
 
 func (esd *ESD) flip(oldEvent int, newEvent int) {
-//   fmt.Println("$", oldEvent, newEvent)
-//   fmt.Println("$", esd.Tau)
   esd.Tau[oldEvent]=0
   esd.Tau[newEvent]=1
-//   fmt.Println("$", esd.Tau)
 }
 
 func (esd *ESD) flipp(oldPart int, newPart int, eID int ) {

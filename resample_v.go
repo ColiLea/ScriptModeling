@@ -11,7 +11,7 @@ func pick_invcount(v [numTop-1]int) int {
   return newV
 }
 
-func (sampler *Sampler) Resample_v(esd *ESD/*, target int*/) {
+func (sampler *Sampler) Resample_v(esd *ESD) {
 //   fmt.Println("Resampling v=", esd.V)
   for target, _ := range(esd.V) {
 //     fmt.Println(" ...for eventtype", target)
@@ -19,8 +19,8 @@ func (sampler *Sampler) Resample_v(esd *ESD/*, target int*/) {
   var newV int
   var documentLikelihood, gmm, distTotal, totalgmm, totaldoclikelihood, gmax, dmax, distMax float64
   proposedLabels := make([]Label, numTop-target)
-  sampler.Model.UpdateEventWordCounts(esd.Label, -1, "v", target)
-  sampler.Model.UpdateEventParticipantCountsAll(esd.Label, -1)
+  sampler.Model.UpdateEventWordCounts(esd.Label, -1)
+  sampler.Model.UpdateEventParticipantCounts(esd.Label, -1)
   // decrement global inversion count for target eventtype
   sampler.Model.invcount_histogram[target] -= esd.V[target]
   if sampler.Model.invcount_histogram[target]<0 {
@@ -60,7 +60,7 @@ func (sampler *Sampler) Resample_v(esd *ESD/*, target int*/) {
   esd.Pi = computePi(esd.V)
   esd.UpdateLabelingT()
   sampler.Model.invcount_histogram[target] += esd.V[target]
-  sampler.Model.UpdateEventWordCounts(esd.Label, 1, "v", target)
-  sampler.Model.UpdateEventParticipantCountsAll(esd.Label, 1)
+  sampler.Model.UpdateEventWordCounts(esd.Label, 1)
+  sampler.Model.UpdateEventParticipantCounts(esd.Label, 1)
   }
 }
