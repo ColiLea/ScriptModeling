@@ -61,8 +61,8 @@ func vPrior (rho0 float64) [numTop-1]float64 {
   return vPrior
 }
 
-func hyperPrior(eVocab map[string]Histogram, pVocab map[string]Histogram) (normal Normal) {
-  normal.Variance = getCovarianceMatrix(eVocab, pVocab)
+func hyperPrior(eVocab map[int]Histogram, pVocab map[int]Histogram) (normal Normal) {
+//   normal.Variance = getCovarianceMatrix(eVocab, pVocab)
   normal.Mean = make([]float64, len(eVocab)+len(pVocab))
   return
 }

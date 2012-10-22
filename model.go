@@ -2,16 +2,16 @@ package scriptModeling
 
 import "fmt"
 
-const numTop int = 10
-const numPar int = 10
+const numTop int = 25
+const numPar int = 25
 
 // Model type, Contains all priors; eventhistogram=counts of events; eventInvcounthistogram:eventspecific inversioncounts; wordEventhistogram:wordspecific eventcounts
 type Model struct {
   eventtype_histogram Histogram
   participanttype_histogram Histogram
   participanttype_eventtype_histogram map[int]Histogram	//key=participanttype
-  word_eventtype_histogram map[string]Histogram		//key=word
-  word_participanttype_histogram map[string]Histogram 	//key=word
+  word_eventtype_histogram map[int]Histogram		//key=word mapped to int
+  word_participanttype_histogram map[int]Histogram 	//key=word mapped to int
   invcount_histogram Histogram
   numESDs int
   eventVocabulary int
@@ -25,8 +25,8 @@ func NewModel() *Model {
   model.participanttype_histogram = newHistogram(numPar)
   model.invcount_histogram = newHistogram(numTop-1)
   model.rho = make([]float64, numTop-1)
-  model.word_eventtype_histogram = make(map[string]Histogram)
-  model.word_participanttype_histogram = make(map[string]Histogram)
+  model.word_eventtype_histogram = make(map[int]Histogram)
+  model.word_participanttype_histogram = make(map[int]Histogram)
   model.participanttype_eventtype_histogram = make(map[int]Histogram, numPar)
   return model
 }
@@ -90,7 +90,7 @@ func (model *Model) UpdateEventWordCounts(label Label, count int) {
    }
 }
 
-func (model *Model) UpdateParticipantWordCounts(target int, words []string, count int) {
+func (model *Model) UpdateParticipantWordCounts(target int, words []int, count int) {
   for _, word := range(words) {
     model.word_participanttype_histogram[word][target]+=count
      if model.word_participanttype_histogram[word][target] < 0 {
@@ -124,10 +124,10 @@ func (model Model) Print() {
   }
   fmt.Println("\n", "Word-Event Hist:")
   for wd, e := range(model.word_eventtype_histogram) {
-    fmt.Println(wd, e)
+    fmt.Println(vocabulary.itov[wd], e)
   }
   fmt.Println("\n", "Word-Participant Hist:")
   for wd, e := range(model.word_participanttype_histogram) {
-    fmt.Println(wd, e)
+    fmt.Println(vocabulary.itov[wd], e)
   }
 }

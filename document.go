@@ -16,8 +16,8 @@ type ESD struct {
 type Label map[int]Content
 
 type Content struct {
-  Words []string
-  Participants map[int][]string
+  Words []int
+  Participants map[int][]int
   Tau [numPar]int
 }
 
@@ -137,7 +137,7 @@ func (esd *ESD) Copy() (newESD ESD) {
   newESD.V = esd.V
   newESD.EventLabel = esd.EventLabel
   for key,_ := range(esd.Label) {
-    tmpP := make(map[int][]string, len(esd.Label[key].Participants))
+    tmpP := make(map[int][]int, len(esd.Label[key].Participants))
     for pkey, pVal := range(esd.Label[key].Participants) {
       tmpP[pkey] = pVal
     }

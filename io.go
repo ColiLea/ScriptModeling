@@ -12,7 +12,28 @@ import "strings"
 import "math/rand"
 import "stemmer"
 
+type vocabMap struct {
+  vtoi map[string]int
+  itov map[int]string
+}
+
+var vocabulary vocabMap
+var vocabIdx int
+
+func (voc vocabMap) add(words []string) {
+  for _,word := range(words) {
+    if _,ok := voc.vtoi[word]; !ok {
+      voc.vtoi[word]=vocabIdx
+      voc.itov[vocabIdx]=word
+      vocabIdx++
+    }
+  }
+}
+
+
+
 func GetCorpus (xmlDir string) (Corpus) {
+  vocabulary = vocabMap{map[string]int{}, map[int]string{}}
   contents,_ := ioutil.ReadDir(xmlDir)
   corpus := Corpus{}
   for _, file := range(contents) {
@@ -22,6 +43,8 @@ func GetCorpus (xmlDir string) (Corpus) {
       corpus = append(corpus, &esd)
     }
   }
+  fmt.Println(vocabulary.vtoi, len(vocabulary.vtoi), "\n==================================\n")
+  fmt.Println(vocabulary.itov, len(vocabulary.itov), "\n==================================\n")
   return corpus
 }
 
@@ -38,6 +61,7 @@ func ReadScenarios(file string) scriptIO.Scripts {
 }
 
 
+
 func createESD (scenario scriptIO.Script) ESD {
   var esd ESD
   var tmpPtao [numPar]int
@@ -47,23 +71,25 @@ func createESD (scenario scriptIO.Script) ESD {
   eIDs := rand.Perm(numTop)[:len(scenario.Item)]
   for idx, event := range(scenario.Item) {
     eWords := preProcess(strings.Split(event.Text, " "))
+    vocabulary.add(eWords)
     if len(eWords) > 0 || len(event.Participants)>0 {
       esd.EventLabel[idx]=eIDs[idx]
       esd.Tau[eIDs[idx]]=1
       // generate participant labels
       tmpPtao = [numPar]int{}
       pIDs := rand.Perm(numPar)[:len(event.Participants)]
-      esd.Label[eIDs[idx]] = Content{eWords, map[int][]string{}, tmpPtao}
+      esd.Label[eIDs[idx]] = Content{getIntRep(eWords), map[int][]int{}, tmpPtao}
       for pIdx, part := range(event.Participants) {
 	pWords := preProcess(strings.Split(part.Text, " "))
+	vocabulary.add(pWords)
 	if len(pWords) > 0 {
-	  esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = pWords
+	  esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = getIntRep(pWords)
 	}
       }
       for key, _ := range(esd.Label[eIDs[idx]].Participants) {
 	tmpPtao[key]=1
       }
-      esd.Label[eIDs[idx]] = Content{eWords, esd.Label[eIDs[idx]].Participants, tmpPtao}
+      esd.Label[eIDs[idx]] = Content{esd.Label[eIDs[idx]].Words, esd.Label[eIDs[idx]].Participants, tmpPtao}
     }
   }
   // generate ordering under word-order constraint
@@ -74,6 +100,14 @@ func createESD (scenario scriptIO.Script) ESD {
   esd.ComputeV()
   esd.Length=len(esd.Label)
   return esd
+}
+
+func getIntRep(words []string) (intRep []int) {
+  intRep = make([]int, len(words))
+  for idx, word := range(words) {
+    intRep[idx] = vocabulary.vtoi[word]
+  }
+  return
 }
 
 

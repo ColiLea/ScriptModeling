@@ -64,7 +64,7 @@
  }
 
  
- func computeDelta(term string, words []string) (update int) {
+ func computeDelta(term int, words []int) (update int) {
    for _,word := range(words) {
      if word==term {
        update++
