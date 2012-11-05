@@ -92,6 +92,15 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   }
   // sample new label
   newLabel = sample(distribution)
+  // check whether words have changed class; if so: resample eta
+  diff := esd.compareTo(tempESDs[newLabel])
+  if  len(diff) > 0 {
+    for class,words := range(diff) {
+      for _,word := range(words) {
+	_ = sampler.Resample_eta(sampler.eventlmPriors[class], word)
+      }
+    }
+  }
   // update model & esd
    *esd = tempESDs[newLabel]
    sampler.Model.eventtype_histogram[alts[newLabel]]++

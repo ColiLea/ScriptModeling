@@ -10,30 +10,11 @@ import "encoding/xml"
 import "path"
 import "strings"
 import "math/rand"
-import "stemmer"
-
-type vocabMap struct {
-  vtoi map[string]int
-  itov map[int]string
-}
-
-var vocabulary vocabMap
-var vocabIdx int
-
-func (voc vocabMap) add(words []string) {
-  for _,word := range(words) {
-    if _,ok := voc.vtoi[word]; !ok {
-      voc.vtoi[word]=vocabIdx
-      voc.itov[vocabIdx]=word
-      vocabIdx++
-    }
-  }
-}
-
-
+// import "stemmer"
 
 func GetCorpus (xmlDir string) (Corpus) {
-  vocabulary = vocabMap{map[string]int{}, map[int]string{}}
+  VList := make([]string, 100000000)
+  vocabulary = vocabMap{map[string]int{}, map[int]string{}, VList}
   contents,_ := ioutil.ReadDir(xmlDir)
   corpus := Corpus{}
   for _, file := range(contents) {
@@ -43,6 +24,8 @@ func GetCorpus (xmlDir string) (Corpus) {
       corpus = append(corpus, &esd)
     }
   }
+  vocabulary.VList = vocabulary.VList[:vocabIdx]
+  fmt.Println(vocabulary.VList, len(vocabulary.VList), "\n==================================\n")
   fmt.Println(vocabulary.vtoi, len(vocabulary.vtoi), "\n==================================\n")
   fmt.Println(vocabulary.itov, len(vocabulary.itov), "\n==================================\n")
   return corpus
@@ -132,7 +115,7 @@ func preProcess(full []string) []string {
   clean = clean[:idx]
   for idx, _ := range(clean) {
     clean[idx] = strings.Trim(clean[idx], `.,!?'"-:(){}[]#$@%^&*_+=`)
-    clean[idx] = string(stemmer.Stem([]byte(clean[idx])))
+//     clean[idx] = string(stemmer.Stem([]byte(clean[idx])))
   }
   return clean
 }

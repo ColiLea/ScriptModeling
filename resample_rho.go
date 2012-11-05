@@ -3,7 +3,6 @@
  
 import "fmt"
 import "strconv"
-// import "os/exec"
 import "strings"
 
 func (sampler *Sampler)Resample_rho() {

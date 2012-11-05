@@ -23,11 +23,11 @@
 	   update = computeDelta(term, label[k].Words)
 	 }
 	 // compute LGamma(N(word,event) + prior + udpate)
-	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPrior+float64(update))
+	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPriors[k][term]+float64(update))
 	 wordFactor += wordTypeFactor
 	 }
        // normalize LGamma(N(words_by_event) + V*prior + total_update)
-       wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.eventVocabulary)*sampler.eventlmPrior + float64(len(label[k].Words)))
+       wordNorm,_ = math.Lgamma(float64(typeWordTotal) + priorSum(sampler.eventlmPriors[k]) + float64(len(label[k].Words)))
        documentLikelihood += (wordFactor - wordNorm)
      }
    return documentLikelihood
@@ -53,18 +53,18 @@
 	  update = computeDelta(term, label[event].Participants[participant])
 	}
         // compute LGamma(N(word,part) + prior + update)
-        wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+sampler.participantlmPrior+float64(update))
+        wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+sampler.participantlmPriors[i][term]+float64(update))
         wordFactor += wordTypeFactor
       }
       // normalize
-      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + float64(sampler.Model.participantVocabulary)*sampler.participantlmPrior + float64(len(label[event].Participants[participant])))
+      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + priorSum(sampler.participantlmPriors[i]) + float64(len(label[event].Participants[participant])))
       documentLikelihood += (wordFactor - wordNorm)
      }
    return documentLikelihood
  }
 
  
- func computeDelta(term int, words []int) (update int) {
+func computeDelta(term int, words []int) (update int) {
    for _,word := range(words) {
      if word==term {
        update++
@@ -73,5 +73,10 @@
    return
 }
 
-
-
+func priorSum(priors []float64) float64 {
+  sum := 0.0
+  for _, value := range(priors) {
+    sum += value
+  }
+  return sum
+}

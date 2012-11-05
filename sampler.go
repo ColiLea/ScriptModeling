@@ -1,39 +1,39 @@
  package scriptModeling
 
-// import "fmt"
 import "math"
 import "math/rand"
+import "leaMatrix"
+import "fmt"
 
 type Sampler struct {
   eventPosPrior float64
   eventNegPrior float64
-  eventlmPrior float64
   participantPosPrior float64
   participantNegPrior float64
-  participantlmPrior float64
+  eventlmPriors [][]float64
+  participantlmPriors [][]float64
+  covariances leaMatrix.Matrix
   nu_0 float64
   v_0 [numTop-1]float64
-  lmHyperPrior Normal
   Model Model
 }
 
-type Normal struct {
-  Mean []float64
-  Variance [][]float64
-}
 
-func NewSampler(ePprior float64, eNprior float64, elmprior float64, pPprior float64, pNprior float64, plmprior float64, rho0 float64, nu0 float64, model Model) *Sampler {
+func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float64, rho0 float64, nu0 float64, model Model) *Sampler {
   sampler := new(Sampler)
   sampler.Model = model
   sampler.eventPosPrior = ePprior
   sampler.eventNegPrior = eNprior
-  sampler.eventlmPrior = elmprior
   sampler.participantPosPrior = pPprior
   sampler.participantNegPrior = pNprior
-  sampler.participantlmPrior = plmprior
+//   sampler.covariances = *GetCovarianceMatrix(vocabulary.VList)
+  sampler.covariances = leaMatrix.LoadCovariance("./vocabularies/noodle_vocabulary")
+  fmt.Println(sampler.covariances.Data)
+  fmt.Println(sampler.covariances.Inverse)
+  sampler.eventlmPriors = initializeEta(numTop)
+  sampler.participantlmPriors = initializeEta(numPar)
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)
   sampler.v_0 = vPrior(rho0)
-  sampler.lmHyperPrior = hyperPrior(model.word_eventtype_histogram, model.word_participanttype_histogram)
   sampler.Resample_rho()
   return sampler
 }
@@ -61,8 +61,13 @@ func vPrior (rho0 float64) [numTop-1]float64 {
   return vPrior
 }
 
-func hyperPrior(eVocab map[int]Histogram, pVocab map[int]Histogram) (normal Normal) {
-//   normal.Variance = getCovarianceMatrix(eVocab, pVocab)
-  normal.Mean = make([]float64, len(eVocab)+len(pVocab))
+func initializeEta(classes int) (eta [][]float64) {
+  eta = make([][]float64, classes)
+  for idx,_ := range(eta) {
+    eta[idx]=make([]float64, len(vocabulary.VList))
+    for vIdx,_ := range(eta[idx]){
+      eta[idx][vIdx]=0.01
+    }
+  }
   return
 }

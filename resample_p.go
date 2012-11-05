@@ -107,9 +107,15 @@
        distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
      }
      newV = sample(distribution)
-//      fmt.Println(distribution)
-//      fmt.Println(newV, "  = participanttype", alts[newV])
-     
+     // resample eta
+     diff := esd.compareToP(tempESDs[newV])
+     if  len(diff) > 0 {
+      for class,words := range(diff) {
+	for _,word := range(words) {
+	  _ = sampler.Resample_eta(sampler.participantlmPriors[class], word)
+	}
+      }
+    }
      //update esd and model
      *esd = tempESDs[newV]
      sampler.Model.participanttype_histogram[alts[newV]]++

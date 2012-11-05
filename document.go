@@ -146,6 +146,45 @@ func (esd *ESD) Copy() (newESD ESD) {
   return
 }
 
+func (esd1 *ESD) compareTo(esd2 ESD) (diff map[int][]int) {
+  var w1List []int
+  var equal bool
+  diff = make(map[int][]int)
+  for key,val := range(esd2.Label) {
+    if _,ok := esd1.Label[key]; !ok {
+      diff[key]=val.Words
+    } else {
+      w1List = esd1.Label[key].Words
+      for _,wordID := range(w1List) {
+	equal = false
+	for _, w2 := range(val.Words) {
+	  if wordID==w2 {
+	    equal=true
+	  }
+	}
+	if equal==false {
+	  diff[key]=val.Words
+	}
+      }
+    }
+  }
+  return diff
+}
+
+
+func (esd1 *ESD) compareToP(esd2 ESD) (diff map[int][]int) {
+  diff = make(map[int][]int)
+  //for each event
+  for eKey,event := range(esd2.Label) {
+    //for each participant
+    for key,val := range(event.Participants) {
+      if _,ok := esd1.Label[eKey].Participants[key]; !ok {
+	diff[key]=val
+      }
+    }
+  }
+  return diff
+}
 
 func (esd *ESD) Print() {
   fmt.Println("Labeling")
