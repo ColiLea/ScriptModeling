@@ -67,7 +67,7 @@
        fmt.Println("Ordering", diff)
        for class,words := range(diff) {
 	 for _,word := range(words) {
-	   sampler.eventlmPriors[class][word] = sampler.Resample_eta(sampler.eventlmPriors[class], word, docLikelihoods[newV])
+	   sampler.EventlmPriors[class][word] = sampler.Resample_eta(sampler.EventlmPriors[class], word, docLikelihoods[newV])
 	 }
        }
      }

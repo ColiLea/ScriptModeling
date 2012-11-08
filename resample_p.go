@@ -114,7 +114,7 @@
       fmt.Println("Participant", diff)
       for class,words := range(diff) {
 	for _,word := range(words) {
-	  sampler.participantlmPriors[class][word] = sampler.Resample_eta(sampler.participantlmPriors[class], word, docLikelihoods[newV])
+	  sampler.ParticipantlmPriors[class][word] = sampler.Resample_eta(sampler.ParticipantlmPriors[class], word, docLikelihoods[newV])
 	}
       }
     }

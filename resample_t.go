@@ -48,9 +48,12 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   alts := make([]int, numTop)
   eIdx :=0
   
+  // iterate over eventtypes
   for tIdx, val := range(esd.Tau) {
+    // if eventtypes not realized or eventtype==target
     if val==0 || tIdx==target {
       tempESD := *esd
+      // flip if not target
       if val ==0 {
 	tempESD.flip(target, tIdx)
 	tempESD.UpdateLabelingT()
@@ -59,12 +62,13 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
       for k:=0 ; k<numTop ; k++ {
 	update=0.0
 	if k==tIdx {update=1.0}
+	// compute P(model|flip)
 	docPositive,_ = math.Lgamma(float64(sampler.Model.eventtype_histogram[k])+sampler.eventPosPrior+update)
 	docNegative,_ = math.Lgamma(float64(sampler.Model.numESDs-sampler.Model.eventtype_histogram[k])+sampler.eventNegPrior-update)
 	docNormalize,_ = math.Lgamma(float64(sampler.Model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior)
-// 	fmt.Println("T:PNS", sampler.Model.eventtype_histogram[k], sampler.Model.numESDs-sampler.Model.eventtype_histogram[k], sampler.Model.numESDs)
 	lgamma += ((docPositive+docNegative)-docNormalize)
       }
+      // compute P(document|flip)
       documentLikelihood = sampler.documentLikelihood(tempESD.Label)
       distribution[eIdx]=lgamma
       docLikelihoods[eIdx]=documentLikelihood
@@ -99,7 +103,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
     for class,words := range(diff) {
     fmt.Println("Event", diff)
       for _,word := range(words) {
-	sampler.eventlmPriors[class][word] = sampler.Resample_eta(sampler.eventlmPriors[class], word, docLikelihoods[newLabel])
+	sampler.EventlmPriors[class][word] = sampler.Resample_eta(sampler.EventlmPriors[class], word, docLikelihoods[newLabel])
       }
     }
   }

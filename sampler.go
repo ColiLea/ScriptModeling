@@ -11,8 +11,8 @@ type Sampler struct {
   eventNegPrior float64
   participantPosPrior float64
   participantNegPrior float64
-  eventlmPriors [][]float64
-  participantlmPriors [][]float64
+  EventlmPriors [][]float64
+  ParticipantlmPriors [][]float64
   covariances leaMatrix.Matrix
   nu_0 float64
   v_0 [numTop-1]float64
@@ -37,8 +37,8 @@ func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float
     sampler.covariances = *GetCovarianceMatrix(vocabulary.VList, covarianceFlag[1])
   }
   fmt.Println(len(sampler.covariances.Data), len(sampler.covariances.Data[0]))
-  sampler.eventlmPriors = initializeEta(numTop)
-  sampler.participantlmPriors = initializeEta(numPar)
+  sampler.EventlmPriors = initializeEta(numTop)
+  sampler.ParticipantlmPriors = initializeEta(numPar)
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)
   sampler.v_0 = vPrior(rho0)
   sampler.Resample_rho()

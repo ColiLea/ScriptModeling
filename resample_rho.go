@@ -20,7 +20,6 @@ func (sampler *Sampler)Resample_rho() {
     nminusj = numTop-target
 
     slicesampler = getSliceSampler([]string{"1", "3", "@logposterior", strconv.FormatFloat(lastRho, 'f', -1 , 64), "5", "false", strconv.Itoa(totalV), strconv.FormatFloat(v_0, 'f', -1, 64), strconv.FormatFloat(nu_0, 'f', -1, 64), strconv.Itoa(numDocs), strconv.Itoa(nminusj)})
-    fmt.Println(string(slicesampler))
     cmdIn.Write(slicesampler)
     out, err := cmdOut.ReadString('\n')
     newRho,_ := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
