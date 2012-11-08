@@ -189,9 +189,15 @@ func (esd1 *ESD) compareToP(esd2 ESD) (diff map[int][]int) {
 func (esd *ESD) Print() {
   fmt.Println("Labeling")
   for eID,ev := range(esd.Label) {
-    fmt.Println(eID, ev.Words)
+    fmt.Println(eID)
+    for _, word := range(ev.Words) {
+      fmt.Println("  ", vocabulary.itov[word])
+    }
     for pID, w := range(ev.Participants) {
-      fmt.Println("    ", pID, w)
+      fmt.Println("    ", pID)
+      for _, word := range(w) {
+	fmt.Println("      ", vocabulary.itov[word])
+      }
     }
     fmt.Println("    ", ev.Tau)
   }

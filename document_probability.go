@@ -7,11 +7,12 @@
  // compute document likelihood of the events in the current esd
  // all participant labelings will stay constant -> no need to compute them!
  func (sampler *Sampler) documentLikelihood(label Label) float64 {
-   var wordTypeFactor, wordFactor, wordNorm float64
+   var wordTypeFactor, wordFactor, wordNorm, priorDenominator float64
    var typeWordTotal, update int
    documentLikelihood := 0.0
    // iterate over eventtypes
      for k := 0 ; k<numTop ; k++ {
+       priorDenominator = priorExpSum(sampler.eventlmPriors[k])
        wordFactor = 0.0
        typeWordTotal = 0
        // iterate over terms in event-vocab
@@ -23,11 +24,11 @@
 	   update = computeDelta(term, label[k].Words)
 	 }
 	 // compute LGamma(N(word,event) + prior + udpate)
-	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.eventlmPriors[k][term]+float64(update))
+	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+(math.Exp(sampler.eventlmPriors[k][term])/priorDenominator)+float64(update))
 	 wordFactor += wordTypeFactor
 	 }
        // normalize LGamma(N(words_by_event) + V*prior + total_update)
-       wordNorm,_ = math.Lgamma(float64(typeWordTotal) + priorSum(sampler.eventlmPriors[k]) + float64(len(label[k].Words)))
+       wordNorm,_ = math.Lgamma(float64(typeWordTotal) + priorSum(sampler.eventlmPriors[k], priorDenominator) + float64(len(label[k].Words)))
        documentLikelihood += (wordFactor - wordNorm)
      }
    return documentLikelihood
@@ -37,11 +38,12 @@
   // compute document likelihood of the participant realization in question, given the proposed label
   // all event doc likelihoods will stay constant w.r.t. change -> no need to compute them!
   func (sampler *Sampler) documentLikelihoodP(event int, participant int, label Label) float64 {
-   var wordTypeFactor, wordFactor, wordNorm float64
+   var wordTypeFactor, wordFactor, wordNorm, priorDenominator float64
    var typeWordTotal, update int
    documentLikelihood := 0.0
      // iterate over participanttypes
      for i:= 0 ; i<numPar ; i++ {
+      priorDenominator = priorExpSum(sampler.participantlmPriors[i])
       wordFactor = 0.0
       typeWordTotal = 0
       // iterate over terms in participant vocab
@@ -53,11 +55,11 @@
 	  update = computeDelta(term, label[event].Participants[participant])
 	}
         // compute LGamma(N(word,part) + prior + update)
-        wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+sampler.participantlmPriors[i][term]+float64(update))
+        wordTypeFactor,_ = math.Lgamma(float64(histogram[i])+(math.Exp(sampler.participantlmPriors[i][term])/priorDenominator)+float64(update))
         wordFactor += wordTypeFactor
       }
       // normalize
-      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + priorSum(sampler.participantlmPriors[i]) + float64(len(label[event].Participants[participant])))
+      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + priorSum(sampler.participantlmPriors[i], priorDenominator) + float64(len(label[event].Participants[participant])))
       documentLikelihood += (wordFactor - wordNorm)
      }
    return documentLikelihood
@@ -73,10 +75,18 @@ func computeDelta(term int, words []int) (update int) {
    return
 }
 
-func priorSum(priors []float64) float64 {
+func priorSum(priors []float64, norm float64) float64 {
   sum := 0.0
   for _, value := range(priors) {
-    sum += value
+    sum += (math.Exp(value)/norm)
+  }
+  return sum
+}
+
+func priorExpSum(priors []float64) float64 {
+  sum := 0.0
+  for _, value := range(priors) {
+    sum += math.Exp(value)
   }
   return sum
 }

@@ -1,6 +1,6 @@
  package scriptModeling
 
-// import "fmt"
+import "fmt"
 import "math/rand"
 import "math"
 
@@ -84,7 +84,8 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   dmax, totaldoclikelihood = computeNorm(docLikelihoods)
   
   for idx,_ := range(distribution) {
-    distribution[idx] = math.Log(math.Exp(distribution[idx]-tmax)/totalgamma) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
+    docLikelihoods[idx]=math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
+    distribution[idx] = math.Log(math.Exp(distribution[idx]-tmax)/totalgamma) + math.Log(docLikelihoods[idx])
   }
   distMax, distTotal = computeNorm(distribution)
   for idx,_ := range(distribution) {
@@ -96,8 +97,9 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   diff := esd.compareTo(tempESDs[newLabel])
   if  len(diff) > 0 {
     for class,words := range(diff) {
+    fmt.Println("Event", diff)
       for _,word := range(words) {
-	_ = sampler.Resample_eta(sampler.eventlmPriors[class], word)
+	sampler.eventlmPriors[class][word] = sampler.Resample_eta(sampler.eventlmPriors[class], word, docLikelihoods[newLabel])
       }
     }
   }

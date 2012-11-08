@@ -129,3 +129,25 @@ func UpdateLabelingV(tau [numTop]int, pi [numTop]int, eventLabel []int, label La
   }
   return newLabel
 }
+
+func Compare(list1, list2 []int) bool {
+  if len(list1) != len(list2) {
+    return false
+  } else {
+    for idx, _ := range(list1) {
+      if list1[idx] != list2[idx] {
+	return false
+      }
+    }
+  }
+  return true
+}
+
+func isIn(el int, list []int) bool {
+  for _,val := range(list) {
+    if el==val {
+      return true
+    }
+  }
+  return false
+}

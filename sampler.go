@@ -1,6 +1,7 @@
  package scriptModeling
 
 import "math"
+import "strings"
 import "math/rand"
 import "leaMatrix"
 import "fmt"
@@ -19,17 +20,23 @@ type Sampler struct {
 }
 
 
-func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float64, rho0 float64, nu0 float64, model Model) *Sampler {
+func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float64, rho0 float64, nu0 float64, model Model, cov string) *Sampler {
+  
+  covarianceFlag := strings.Split(cov , " ")
+  
   sampler := new(Sampler)
   sampler.Model = model
   sampler.eventPosPrior = ePprior
   sampler.eventNegPrior = eNprior
   sampler.participantPosPrior = pPprior
   sampler.participantNegPrior = pNprior
-//   sampler.covariances = *GetCovarianceMatrix(vocabulary.VList)
-  sampler.covariances = leaMatrix.LoadCovariance("./vocabularies/noodle_vocabulary")
-  fmt.Println(sampler.covariances.Data)
-  fmt.Println(sampler.covariances.Inverse)
+  if covarianceFlag[0]=="load" {
+    sampler.covariances = leaMatrix.LoadCovariance(covarianceFlag[1])
+  } else {
+    fmt.Println(len(vocabulary.VList))
+    sampler.covariances = *GetCovarianceMatrix(vocabulary.VList, covarianceFlag[1])
+  }
+  fmt.Println(len(sampler.covariances.Data), len(sampler.covariances.Data[0]))
   sampler.eventlmPriors = initializeEta(numTop)
   sampler.participantlmPriors = initializeEta(numPar)
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)

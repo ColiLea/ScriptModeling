@@ -29,7 +29,7 @@ func GetVocabulary() []string {
   return vocabulary.VList
 }
 
-func GetCovarianceMatrix(vocab []string) (matrix *leaMatrix.Matrix) {
+func GetCovarianceMatrix(vocab []string, outFile string) (matrix *leaMatrix.Matrix) {
   args := []string{"wnCovariance.py", "--vocabulary"}
   args = append(args, vocab...)
   cmd := new(exec.Cmd)
@@ -41,7 +41,7 @@ func GetCovarianceMatrix(vocab []string) (matrix *leaMatrix.Matrix) {
     fmt.Println(err)
   }
   matrix = parse(string(out))
-  matrix.Store("./noodle_vocabulary")
+  matrix.Store(outFile)
   return matrix
 }
 

@@ -1,6 +1,6 @@
  package scriptModeling
  
-//  import "fmt"
+ import "fmt"
  import "math/rand"
  import "math"
  
@@ -44,7 +44,8 @@
      dmax, totaldoclikelihood = computeNorm(docLikelihoods)
      
      for idx,_ := range(distribution) {
-       distribution[idx] = math.Log(math.Exp(distribution[idx]-gmax)/totalgmm) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
+       docLikelihoods[idx]=math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
+       distribution[idx] = math.Log(math.Exp(distribution[idx]-gmax)/totalgmm) + math.Log(docLikelihoods[idx])
      }
      distMax, distTotal = computeNorm(distribution)
      for idx,_ := range(distribution) {
@@ -63,9 +64,10 @@
      // check whether words have changed class; if so: resample eta
      diff := oldESD.compareTo(*esd)
      if  len(diff) > 0 {
+       fmt.Println("Ordering", diff)
        for class,words := range(diff) {
 	 for _,word := range(words) {
-	   _ = sampler.Resample_eta(sampler.eventlmPriors[class], word)
+	   sampler.eventlmPriors[class][word] = sampler.Resample_eta(sampler.eventlmPriors[class], word, docLikelihoods[newV])
 	 }
        }
      }

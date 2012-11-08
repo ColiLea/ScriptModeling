@@ -2,7 +2,7 @@
  
  import "math/rand"
  import "math"
-//  import "fmt"
+ import "fmt"
  
  
  // check whether there are any participants in the esd
@@ -100,7 +100,8 @@
      dmax, totaldoclikelihood = computeNorm(docLikelihoods)
      
      for idx,_ := range(distribution) {
-       distribution[idx] = math.Log(math.Exp(distribution[idx]-pmax)/totalgamma) + math.Log(math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood)
+       docLikelihoods[idx]=math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
+       distribution[idx] = math.Log(math.Exp(distribution[idx]-pmax)/totalgamma) + math.Log(docLikelihoods[idx])
      }
      distMax,distTotal = computeNorm(distribution)
      for idx,_ := range(distribution) {
@@ -110,9 +111,10 @@
      // resample eta
      diff := esd.compareToP(tempESDs[newV])
      if  len(diff) > 0 {
+      fmt.Println("Participant", diff)
       for class,words := range(diff) {
 	for _,word := range(words) {
-	  _ = sampler.Resample_eta(sampler.participantlmPriors[class], word)
+	  sampler.participantlmPriors[class][word] = sampler.Resample_eta(sampler.participantlmPriors[class], word, docLikelihoods[newV])
 	}
       }
     }

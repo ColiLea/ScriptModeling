@@ -1,28 +1,33 @@
 package scriptModeling
 
-import "leaMatrix"
-import "math"
+import "strconv"
+import "bytes"
+import "strings"
+import "fmt"
 
-func (sampler *Sampler)Resample_eta(eta []float64, i int) (prob float64) {
-  // NOTE I'll do all this stuff in Octave actually -.- ...
-  // Pass the vectors (=COLUMN vectors) as v= [e1 ; e2 ; ...]
-  // Pass the matrix as m = [11 , 12 , 13 ; 21 , 22 , 23 ; 31 , 32 , 33 ; ...]
-  // save it like that..??
+func (sampler *Sampler)Resample_eta(eta []float64, i int, docLikelihood float64) (newEta float64) {
+  fmt.Println(i, vocabulary.itov[i], eta[i], docLikelihood)
+  
+  slicesampler := getSliceSampler([]string{"1", "3", "@normalposterior", strconv.FormatFloat(eta[i], 'f', -1 , 64), "2", "false", String(eta), strconv.Itoa(i+1), sampler.covariances.InverseStr, strconv.FormatFloat(docLikelihood, 'f', -1, 64)})
+  
+//   fmt.Println(string(slicesampler))
+  cmdIn.Write(slicesampler)
 
+  out, err := cmdOut.ReadString('\n')
+  newEta,_ = strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
+  if err != nil {
+    newEta=eta[i]
+  }
+  fmt.Println(string(out), newEta, "\n\n")
+  return newEta
 }
 
-
-func getEtas(eta []float64, cmp int) (eta_i, eta_not []float64) {
-  eta_i = make([]float64, len(eta))
-  eta_not = make([]float64, len(eta))
-  copy(eta_i, eta)
-  eta_i[cmp] = 0.0
-  for idx,_ := range(eta_not){
-    if idx == cmp {
-      eta_not[idx]=eta[idx]
-    } else {
-      eta_not[idx]=0
-    }
+func String(eta []float64) string {
+  var etaS bytes.Buffer
+  etaS.WriteString("[")
+  for idx,_ := range(eta){
+      etaS.WriteString(strconv.FormatFloat(eta[idx], 'f', -1, 64)+";")
   }
-  return
+  etaS.WriteString("]")
+  return etaS.String()
 }

@@ -90,7 +90,6 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
 
 
 func Randomize(esd ESD) (newESD ESD) {
-  var oldZPos int
   idx:=0
   newESD.Label = make(map[int]Content, len(esd.Label))
   eIDs := rand.Perm(numTop)[:len(esd.Label)]
@@ -112,15 +111,11 @@ func Randomize(esd ESD) (newESD ESD) {
     idx++
   }
   newESD.EventLabel = make([]int, len(newESD.Label))
-  for nidx, nval := range(newESD.Label) {
-    for idx, val := range(esd.Label) {
-      if nval.Words[0] == val.Words[0] {
-	for zIdx,zL := range(esd.EventLabel) {
-	  if zL==idx {
-	    oldZPos = zIdx
-	  }
-	}
-	newESD.EventLabel[oldZPos]=nidx
+  for oIdx, oID := range(esd.EventLabel) {
+    oldW := esd.Label[oID].Words
+    for nID, newE := range(newESD.Label) {
+      if Compare(oldW, newE.Words) == true && isIn(nID, newESD.EventLabel[:oIdx]) == false {
+	newESD.EventLabel[oIdx]=nID
       }
     }
   }
@@ -181,8 +176,8 @@ func GetModel() *Model {
   model.eventtype_histogram = Histogram{20,15,20}
   model.participanttype_histogram = Histogram{20,20,20}
   model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,0,20}, 1:Histogram{0,15,0}, 2:Histogram{20,0,0}}
-  model.word_eventtype_histogram = map[int]Histogram{1:Histogram{0,15,0}, 2:Histogram{0,0,20}, 0:Histogram{20,0,0}}
-  model.word_participanttype_histogram = map[int]Histogram{3:Histogram{10,0,0}, 4:Histogram{10,0,0}, 5:Histogram{0,0,15},6:Histogram{0,20,0}}
+  model.word_eventtype_histogram = map[int]Histogram{1:Histogram{2,9,2}, 2:Histogram{3,3,14}, 0:Histogram{14,3,3}}
+  model.word_participanttype_histogram = map[int]Histogram{3:Histogram{8,1,1}, 4:Histogram{8,1,1}, 5:Histogram{2,2,11},6:Histogram{3,14,3}}
   model.invcount_histogram= Histogram{0,0}
   model.rho = []float64{0.0,0.0}
   return model
