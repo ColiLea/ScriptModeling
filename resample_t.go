@@ -12,7 +12,7 @@ func pick_event(tau [numTop]int) int {
     el = rand.Intn(len(tau))
     alt = tau[el]
   }
-//   fmt.Println("Resampling t=", tau , " for eventtype", el)
+//   fmt.Println("\n\nResampling t=", tau , " for eventtype", el)
   return el
 }
 
@@ -60,6 +60,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
       }
       lgamma = 0.0
       for k:=0 ; k<numTop ; k++ {
+	//do p(e=k|...) = p(model|flip) * p(document|flip)
 	update=0.0
 	if k==tIdx {update=1.0}
 	// compute P(model|flip)
@@ -68,7 +69,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
 	docNormalize,_ = math.Lgamma(float64(sampler.Model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior)
 	lgamma += ((docPositive+docNegative)-docNormalize)
       }
-      // compute P(document|flip)
+      // compute P(document|flip)  <<== THIS SHOULD BE INSIDE THE LOOP & THE LOOP INSIDE THE DOCLIKELIHOOD SHOULD BE GONE!?!?!
       documentLikelihood = sampler.documentLikelihood(tempESD.Label)
       distribution[eIdx]=lgamma
       docLikelihoods[eIdx]=documentLikelihood
@@ -80,6 +81,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   }
   
   distribution=distribution[:eIdx]
+  
   docLikelihoods=docLikelihoods[:eIdx]
   tempESDs=tempESDs[:eIdx]
   alts=alts[:eIdx]
@@ -99,11 +101,24 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   newLabel = sample(distribution)
   // check whether words have changed class; if so: resample eta
   diff := esd.compareTo(tempESDs[newLabel])
+  diff2 := tempESDs[newLabel].compareTo(*esd)
   if  len(diff) > 0 {
+    fmt.Println("Event", diff, diff2)
     for class,words := range(diff) {
-    fmt.Println("Event", diff)
       for _,word := range(words) {
-	sampler.EventlmPriors[class][word] = sampler.Resample_eta(sampler.EventlmPriors[class], word, docLikelihoods[newLabel])
+	fmt.Println(sampler.EventlmPriors[class][word])
+	sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
+	sampler.updatePrior(class, "event")
+	fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
+      }
+    }
+    fmt.Println("diff2 (should DECREASE): ")
+    for class,words := range(diff2) {
+      for _,word := range(words) {
+	fmt.Println(sampler.EventlmPriors[class][word])
+	sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
+	sampler.updatePrior(class, "event")
+	fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
       }
     }
   }

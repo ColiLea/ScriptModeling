@@ -6,7 +6,7 @@ import "strconv"
 import "strings"
 
 func (sampler *Sampler)Resample_rho() {
-  fmt.Println("Resampling Rho")
+//   fmt.Println("Resampling Rho")
   var v_0, nu_0 float64
   var totalV, numDocs, nminusj int
   var slicesampler []byte

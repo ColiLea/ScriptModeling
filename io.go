@@ -13,9 +13,11 @@ import "math/rand"
 // import "stemmer"
 
 func GetCorpus (xmlDir string) (Corpus) {
-  VList := make([]string, 100000000)
+  fmt.Println("1")
+  VList := make([]string, 1000)
   vocabulary = vocabMap{map[string]int{}, map[int]string{}, VList}
   contents,_ := ioutil.ReadDir(xmlDir)
+  fmt.Println("2", contents)
   corpus := Corpus{}
   for _, file := range(contents) {
     scenarios := ReadScenarios(path.Join(xmlDir, file.Name()))
@@ -24,7 +26,9 @@ func GetCorpus (xmlDir string) (Corpus) {
       corpus = append(corpus, &esd)
     }
   }
+  fmt.Println("3", corpus)
   vocabulary.VList = vocabulary.VList[:vocabIdx]
+  fmt.Println("4", vocabulary.VList)
   fmt.Println(vocabulary.VList, len(vocabulary.VList), "\n==================================\n")
   fmt.Println(vocabulary.vtoi, len(vocabulary.vtoi), "\n==================================\n")
   fmt.Println(vocabulary.itov, len(vocabulary.itov), "\n==================================\n")

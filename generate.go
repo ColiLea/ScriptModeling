@@ -9,7 +9,7 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
   var wList []int
   const modelTop int = 3
   const modelPar int = 3
-  vocabulary = vocabMap{map[string]int{"add":1, "serve":2, "boil":0, "water":5, "salt":6, "pasta":3, "noodle":4}, map[int]string{0:"boil", 1:"add", 2:"serve", 3:"pasta", 4:"noodle", 5:"water", 6:"salt"}, []string{"boil","add","serve","pasta","noodle","water","salt"}} 
+  vocabulary = vocabMap{map[string]int{"add":1, "serve":2, "boil":0, "water":5, "salt":6, "pasta":3, "noodle":4, "cook":7}, map[int]string{7:"cook", 0:"boil", 1:"add", 2:"serve", 3:"pasta", 4:"noodle", 5:"water", 6:"salt"}, []string{"boil","add","serve","pasta","noodle","water","salt", "cook"}} 
   rho := [2]float64{5.9, 5.9}
   tmpPtau := [numPar]int{}
   esd := new(ESD)
@@ -171,13 +171,13 @@ func GetModel() *Model {
   // 0:pasta		1:salt		2:water
   model := new(Model)
   model.numESDs = 20
-  model.eventVocabulary = 3
+  model.eventVocabulary = 4
   model.participantVocabulary = 4
   model.eventtype_histogram = Histogram{20,15,20}
   model.participanttype_histogram = Histogram{20,20,20}
-  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,0,20}, 1:Histogram{0,15,0}, 2:Histogram{20,0,0}}
-  model.word_eventtype_histogram = map[int]Histogram{1:Histogram{2,9,2}, 2:Histogram{3,3,14}, 0:Histogram{14,3,3}}
-  model.word_participanttype_histogram = map[int]Histogram{3:Histogram{8,1,1}, 4:Histogram{8,1,1}, 5:Histogram{2,2,11},6:Histogram{3,14,3}}
+  model.participanttype_eventtype_histogram = map[int]Histogram{0:Histogram{0,5,15}, 1:Histogram{0,15,0}, 2:Histogram{20,0,0}}
+  model.word_eventtype_histogram = map[int]Histogram{1:Histogram{0,14,0}, 2:Histogram{0,0,16}, 0:Histogram{12,0,0}, 7:Histogram{8,0,0}}
+  model.word_participanttype_histogram = map[int]Histogram{3:Histogram{9,0,0}, 4:Histogram{9,0,0}, 5:Histogram{0,0,20},6:Histogram{0,20,0}}
   model.invcount_histogram= Histogram{0,0}
   model.rho = []float64{0.0,0.0}
   return model

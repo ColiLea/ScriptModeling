@@ -31,12 +31,14 @@ func GetVocabulary() []string {
 
 func GetCovarianceMatrix(vocab []string, outFile string) (matrix *leaMatrix.Matrix) {
   args := []string{"wnCovariance.py", "--vocabulary"}
+  fmt.Println(vocab)
   args = append(args, vocab...)
   cmd := new(exec.Cmd)
   cmd.Args = args
 //   cmd.Path = "/home/lea/Code/Python/wnCovariance.py"
   cmd.Path = "/local/lea/thesis/python/wnCovariance.py"
   out,err := cmd.Output()
+  fmt.Println(string(out), err)
   if err != nil {
     fmt.Println(err)
   }

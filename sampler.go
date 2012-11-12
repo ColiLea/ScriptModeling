@@ -1,8 +1,8 @@
  package scriptModeling
 
 import "math"
-import "strings"
 import "math/rand"
+import "strings"
 import "leaMatrix"
 import "fmt"
 
@@ -11,6 +11,8 @@ type Sampler struct {
   eventNegPrior float64
   participantPosPrior float64
   participantNegPrior float64
+  EventEtas [][]float64
+  ParticipantEtas [][]float64
   EventlmPriors [][]float64
   ParticipantlmPriors [][]float64
   covariances leaMatrix.Matrix
@@ -30,15 +32,16 @@ func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float
   sampler.eventNegPrior = eNprior
   sampler.participantPosPrior = pPprior
   sampler.participantNegPrior = pNprior
+  
   if covarianceFlag[0]=="load" {
     sampler.covariances = leaMatrix.LoadCovariance(covarianceFlag[1])
   } else {
-    fmt.Println(len(vocabulary.VList))
+    fmt.Println(covarianceFlag, len(vocabulary.VList), vocabulary)
     sampler.covariances = *GetCovarianceMatrix(vocabulary.VList, covarianceFlag[1])
   }
-  fmt.Println(len(sampler.covariances.Data), len(sampler.covariances.Data[0]))
-  sampler.EventlmPriors = initializeEta(numTop)
-  sampler.ParticipantlmPriors = initializeEta(numPar)
+  fmt.Println(sampler.covariances.DataStr)  
+  sampler.EventEtas, sampler.EventlmPriors  = sampler.initializeEta(numTop)
+  sampler.ParticipantEtas, sampler.ParticipantlmPriors = sampler.initializeEta(numPar)
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)
   sampler.v_0 = vPrior(rho0)
   sampler.Resample_rho()
@@ -46,14 +49,14 @@ func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float
 }
 
 
-//   select which random variable to resample; 0:t  1:v  2:rho
+//   select which random variable to resample; 0:p  1:t  2:v  3:rho
 func (sampler *Sampler)PickVariable(esd *ESD) {	
-  rr := rand.Intn(11)
-  if rr <=2 && esd.hasParticipants() {
+  rr := rand.Intn(3)
+  if rr <=0 && esd.hasParticipants() {
     sampler.Resample_p(esd, Pick_participant(esd.Label))
-  } else if rr<=5 && len(esd.Label) < numTop {
+  } else if rr<=1 && len(esd.Label) < numTop {
     sampler.Resample_t(esd, pick_event(esd.Tau))
-  } else if rr<=8 {
+  } else if rr<=2 {
     sampler.Resample_v(esd)
   } else {
     sampler.Resample_rho()
@@ -68,13 +71,31 @@ func vPrior (rho0 float64) [numTop-1]float64 {
   return vPrior
 }
 
-func initializeEta(classes int) (eta [][]float64) {
+func (sampler *Sampler)initializeEta(classes int) (eta, prior [][]float64) {
   eta = make([][]float64, classes)
-  for idx,_ := range(eta) {
-    eta[idx]=make([]float64, len(vocabulary.VList))
-    for vIdx,_ := range(eta[idx]){
-      eta[idx][vIdx]=0.01
+  prior = make([][]float64, classes)
+  for classIdx,_ := range(eta){
+    eta[classIdx] = make([]float64, len(vocabulary.VList))
+    prior[classIdx] = make([]float64, len(vocabulary.VList))
+    for wordIdx, _ := range(eta[classIdx]) {
+      prior[classIdx][wordIdx] = 1.0/float64(len(vocabulary.VList))
     }
   }
-  return
+  return eta, prior
+}
+
+
+func (sampler *Sampler)updatePrior(class int, mode string) {
+  var normalizer float64
+  if mode == "event" {
+    normalizer = expSum(sampler.EventEtas[class])
+    for wordIdx, _ := range(sampler.EventlmPriors[class]) {
+      sampler.EventlmPriors[class][wordIdx] = math.Exp(sampler.EventEtas[class][wordIdx])/normalizer
+    }
+  } else {
+    normalizer = expSum(sampler.ParticipantEtas[class])
+    for wordIdx, _ := range(sampler.ParticipantlmPriors[class]) {
+      sampler.ParticipantlmPriors[class][wordIdx] = math.Exp(sampler.ParticipantEtas[class][wordIdx])/normalizer
+    }
+  }
 }

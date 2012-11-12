@@ -148,23 +148,16 @@ func (esd *ESD) Copy() (newESD ESD) {
 
 func (esd1 *ESD) compareTo(esd2 ESD) (diff map[int][]int) {
   var w1List []int
-  var equal bool
   diff = make(map[int][]int)
+  // if key2 isn't there -> add to difflist
   for key,val := range(esd2.Label) {
     if _,ok := esd1.Label[key]; !ok {
       diff[key]=val.Words
     } else {
+      // if key is there but with different words -> add to difflist
       w1List = esd1.Label[key].Words
-      for _,wordID := range(w1List) {
-	equal = false
-	for _, w2 := range(val.Words) {
-	  if wordID==w2 {
-	    equal=true
-	  }
-	}
-	if equal==false {
-	  diff[key]=val.Words
-	}
+      if Compare(w1List, val.Words) == false {
+	diff[key]=val.Words
       }
     }
   }

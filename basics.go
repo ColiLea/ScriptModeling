@@ -151,3 +151,19 @@ func isIn(el int, list []int) bool {
   }
   return false
 }
+
+func sum(numbers []float64) float64 {
+  sum := 0.0
+  for _, number := range(numbers) {
+    sum += number
+  }
+  return sum
+}
+
+func expSum(priors []float64) float64 {
+  sum := 0.0
+  for _, value := range(priors) {
+    sum += math.Exp(value)
+  }
+  return sum
+}

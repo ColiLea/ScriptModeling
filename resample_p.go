@@ -27,7 +27,7 @@
      }
    }
    target := rand.Intn(len(events[:idx]))
-//    fmt.Println("Resampling for participants in eventtype", events[target], "=", label[events[target]].Participants)
+//    fmt.Println("\n\nResampling for participants in eventtype", events[target], "=", label[events[target]].Participants)
    return events[target]
  }
  
@@ -110,11 +110,23 @@
      newV = sample(distribution)
      // resample eta
      diff := esd.compareToP(tempESDs[newV])
+     diff2 := tempESDs[newV].compareToP(*esd)
      if  len(diff) > 0 {
-      fmt.Println("Participant", diff)
       for class,words := range(diff) {
 	for _,word := range(words) {
-	  sampler.ParticipantlmPriors[class][word] = sampler.Resample_eta(sampler.ParticipantlmPriors[class], word, docLikelihoods[newV])
+	  fmt.Println(sampler.ParticipantlmPriors[class][word])
+	  sampler.ParticipantEtas[class][word] = sampler.Resample_eta(sampler.ParticipantEtas[class], word, sampler.wordLikelihood(class, "participant"))
+	  sampler.updatePrior(class, "participant")
+	  fmt.Println(sampler.ParticipantlmPriors[class][word], "\n---------\n")
+	}
+      }
+      fmt.Println("diff2 (should DECREASE): ")
+      for class,words := range(diff2) {
+	for _,word := range(words) {
+	  fmt.Println(sampler.ParticipantlmPriors[class][word])
+	  sampler.ParticipantEtas[class][word] = sampler.Resample_eta(sampler.ParticipantEtas[class], word, sampler.wordLikelihood(class, "participant"))
+	  sampler.updatePrior(class, "participant")
+	  fmt.Println(sampler.ParticipantlmPriors[class][word], "\n---------\n")
 	}
       }
     }

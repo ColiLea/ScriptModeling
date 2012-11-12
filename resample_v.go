@@ -7,7 +7,7 @@
  
  func pick_invcount(v [numTop-1]int) int {
    newV := rand.Intn(len(v))
-   //   fmt.Println("Resampling v=", v , " for eventtype", newV)
+//      fmt.Println("\n\nResampling v=", v , " for eventtype", newV)
    return newV
  }
  
@@ -48,6 +48,7 @@
        distribution[idx] = math.Log(math.Exp(distribution[idx]-gmax)/totalgmm) + math.Log(docLikelihoods[idx])
      }
      distMax, distTotal = computeNorm(distribution)
+
      for idx,_ := range(distribution) {
        distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
      }
@@ -62,13 +63,25 @@
      sampler.Model.UpdateEventWordCounts(esd.Label, 1)
      sampler.Model.UpdateEventParticipantCounts(esd.Label, 1)
      // check whether words have changed class; if so: resample eta
-     diff := oldESD.compareTo(*esd)
-     if  len(diff) > 0 {
-       fmt.Println("Ordering", diff)
-       for class,words := range(diff) {
-	 for _,word := range(words) {
-	   sampler.EventlmPriors[class][word] = sampler.Resample_eta(sampler.EventlmPriors[class], word, docLikelihoods[newV])
-	 }
+   }
+   diff := oldESD.compareTo(*esd)
+   diff2 := esd.compareTo(oldESD)
+   if  len(diff) > 0 {
+     for class,words := range(diff) {
+       for _,word := range(words) {
+	 fmt.Println(sampler.EventlmPriors[class][word])
+	 sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
+	 sampler.updatePrior(class, "event")
+	 fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
+       }
+     }
+     fmt.Println("diff2 (should DECREASE): ")
+     for class,words := range(diff2) {
+       for _,word := range(words) {
+	 fmt.Println(sampler.EventlmPriors[class][word])
+	 sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
+	 sampler.updatePrior(class, "event")
+	 fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
        }
      }
    }
