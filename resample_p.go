@@ -108,28 +108,17 @@
        distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
      }
      newV = sample(distribution)
+     if newV == -1 {
+       esd.Print()
+       fmt.Println(sampler.ParticipantlmPriors)
+       fmt.Println(sampler.EventlmPriors)
+     }
      // resample eta
-     diff := esd.compareToP(tempESDs[newV])
+     diff := esd.compareToP(tempESDs[newV]) 
      diff2 := tempESDs[newV].compareToP(*esd)
      if  len(diff) > 0 {
-      for class,words := range(diff) {
-	for _,word := range(words) {
-	  fmt.Println(sampler.ParticipantlmPriors[class][word])
-	  sampler.ParticipantEtas[class][word] = sampler.Resample_eta(sampler.ParticipantEtas[class], word, sampler.wordLikelihood(class, "participant"))
-	  sampler.updatePrior(class, "participant")
-	  fmt.Println(sampler.ParticipantlmPriors[class][word], "\n---------\n")
-	}
-      }
-      fmt.Println("diff2 (should DECREASE): ")
-      for class,words := range(diff2) {
-	for _,word := range(words) {
-	  fmt.Println(sampler.ParticipantlmPriors[class][word])
-	  sampler.ParticipantEtas[class][word] = sampler.Resample_eta(sampler.ParticipantEtas[class], word, sampler.wordLikelihood(class, "participant"))
-	  sampler.updatePrior(class, "participant")
-	  fmt.Println(sampler.ParticipantlmPriors[class][word], "\n---------\n")
-	}
-      }
-    }
+       sampler.updateEta(diff, diff2 ,"participant")
+     }
      //update esd and model
      *esd = tempESDs[newV]
      sampler.Model.participanttype_histogram[alts[newV]]++

@@ -99,28 +99,16 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   }
   // sample new label
   newLabel = sample(distribution)
+  if newLabel == -1 {
+       esd.Print()
+       fmt.Println(sampler.ParticipantlmPriors)
+       fmt.Println(sampler.EventlmPriors)
+  }
   // check whether words have changed class; if so: resample eta
   diff := esd.compareTo(tempESDs[newLabel])
   diff2 := tempESDs[newLabel].compareTo(*esd)
   if  len(diff) > 0 {
-    fmt.Println("Event", diff, diff2)
-    for class,words := range(diff) {
-      for _,word := range(words) {
-	fmt.Println(sampler.EventlmPriors[class][word])
-	sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
-	sampler.updatePrior(class, "event")
-	fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
-      }
-    }
-    fmt.Println("diff2 (should DECREASE): ")
-    for class,words := range(diff2) {
-      for _,word := range(words) {
-	fmt.Println(sampler.EventlmPriors[class][word])
-	sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
-	sampler.updatePrior(class, "event")
-	fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
-      }
-    }
+     sampler.updateEta(diff, diff2, "event")
   }
   // update model & esd
    *esd = tempESDs[newLabel]

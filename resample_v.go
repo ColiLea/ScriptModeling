@@ -1,6 +1,6 @@
  package scriptModeling
  
- import "fmt"
+//  import "fmt"
  import "math/rand"
  import "math"
  
@@ -67,22 +67,6 @@
    diff := oldESD.compareTo(*esd)
    diff2 := esd.compareTo(oldESD)
    if  len(diff) > 0 {
-     for class,words := range(diff) {
-       for _,word := range(words) {
-	 fmt.Println(sampler.EventlmPriors[class][word])
-	 sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
-	 sampler.updatePrior(class, "event")
-	 fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
-       }
-     }
-     fmt.Println("diff2 (should DECREASE): ")
-     for class,words := range(diff2) {
-       for _,word := range(words) {
-	 fmt.Println(sampler.EventlmPriors[class][word])
-	 sampler.EventEtas[class][word] = sampler.Resample_eta(sampler.EventEtas[class], word, sampler.wordLikelihood(class, "event"))
-	 sampler.updatePrior(class, "event")
-	 fmt.Println(sampler.EventlmPriors[class][word], "\n---------\n")
-       }
-     }
+     sampler.updateEta(diff, diff2, "event")
    }
  }

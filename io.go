@@ -13,11 +13,10 @@ import "math/rand"
 // import "stemmer"
 
 func GetCorpus (xmlDir string) (Corpus) {
-  fmt.Println("1")
   VList := make([]string, 1000)
-  vocabulary = vocabMap{map[string]int{}, map[int]string{}, VList}
+  POSList := make([]string, 1000)
+  vocabulary = vocabMap{map[string]int{}, map[int]string{}, VList, POSList}
   contents,_ := ioutil.ReadDir(xmlDir)
-  fmt.Println("2", contents)
   corpus := Corpus{}
   for _, file := range(contents) {
     scenarios := ReadScenarios(path.Join(xmlDir, file.Name()))
@@ -26,12 +25,10 @@ func GetCorpus (xmlDir string) (Corpus) {
       corpus = append(corpus, &esd)
     }
   }
-  fmt.Println("3", corpus)
   vocabulary.VList = vocabulary.VList[:vocabIdx]
-  fmt.Println("4", vocabulary.VList)
+  vocabulary.POSList = vocabulary.POSList[:vocabIdx]
   fmt.Println(vocabulary.VList, len(vocabulary.VList), "\n==================================\n")
-  fmt.Println(vocabulary.vtoi, len(vocabulary.vtoi), "\n==================================\n")
-  fmt.Println(vocabulary.itov, len(vocabulary.itov), "\n==================================\n")
+  fmt.Println(vocabulary.POSList, len(vocabulary.POSList), "\n==================================\n")
   return corpus
 }
 
@@ -58,7 +55,7 @@ func createESD (scenario scriptIO.Script) ESD {
   eIDs := rand.Perm(numTop)[:len(scenario.Item)]
   for idx, event := range(scenario.Item) {
     eWords := preProcess(strings.Split(event.Text, " "))
-    vocabulary.add(eWords)
+    vocabulary.add(eWords, "v")
     if len(eWords) > 0 || len(event.Participants)>0 {
       esd.EventLabel[idx]=eIDs[idx]
       esd.Tau[eIDs[idx]]=1
@@ -68,7 +65,7 @@ func createESD (scenario scriptIO.Script) ESD {
       esd.Label[eIDs[idx]] = Content{getIntRep(eWords), map[int][]int{}, tmpPtao}
       for pIdx, part := range(event.Participants) {
 	pWords := preProcess(strings.Split(part.Text, " "))
-	vocabulary.add(pWords)
+	vocabulary.add(pWords, "n")
 	if len(pWords) > 0 {
 	  esd.Label[eIDs[idx]].Participants[pIDs[pIdx]] = getIntRep(pWords)
 	}

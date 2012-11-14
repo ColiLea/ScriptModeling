@@ -80,7 +80,6 @@ func (sampler *Sampler) wordLikelihood(class int, mode string) float64 {
   if mode == "participant" {
     for term, histogram := range(sampler.Model.word_participanttype_histogram) {
       typeWordTotal += histogram[class]
-      // compute LGamma(N(word,part) + prior + update)
       wordTypeFactor,_ = math.Lgamma(float64(histogram[class])+sampler.ParticipantlmPriors[class][term])
       wordFactor += wordTypeFactor
     }
@@ -88,7 +87,6 @@ func (sampler *Sampler) wordLikelihood(class int, mode string) float64 {
   } else {
     for term, histogram := range(sampler.Model.word_eventtype_histogram) {
       typeWordTotal += histogram[class]
-      // compute LGamma(N(word,part) + prior + update)
       wordTypeFactor,_ = math.Lgamma(float64(histogram[class])+sampler.EventlmPriors[class][term])
       wordFactor += wordTypeFactor
     }
