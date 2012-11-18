@@ -2,8 +2,8 @@ package scriptModeling
 
 import "fmt"
 
-const numTop int = 8
-const numPar int = 8
+const numTop int = 15
+const numPar int = 15
 
 // Model type, Contains all priors; eventhistogram=counts of events; eventInvcounthistogram:eventspecific inversioncounts; wordEventhistogram:wordspecific eventcounts
 type Model struct {
@@ -124,10 +124,10 @@ func (model Model) Print() {
   }
   fmt.Println("\n", "Word-Event Hist:")
   for wd, e := range(model.word_eventtype_histogram) {
-    fmt.Println(vocabulary.itov[wd], e)
+    fmt.Println(vocabulary.Itov[wd], e)
   }
   fmt.Println("\n", "Word-Participant Hist:")
   for wd, e := range(model.word_participanttype_histogram) {
-    fmt.Println(vocabulary.itov[wd], e)
+    fmt.Println(vocabulary.Itov[wd], e)
   }
 }

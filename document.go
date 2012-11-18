@@ -184,12 +184,12 @@ func (esd *ESD) Print() {
   for eID,ev := range(esd.Label) {
     fmt.Println(eID)
     for _, word := range(ev.Words) {
-      fmt.Println("  ", vocabulary.itov[word])
+      fmt.Println("  ", vocabulary.Itov[word])
     }
     for pID, w := range(ev.Participants) {
       fmt.Println("    ", pID)
       for _, word := range(w) {
-	fmt.Println("      ", vocabulary.itov[word])
+	fmt.Println("      ", vocabulary.Itov[word])
       }
     }
     fmt.Println("    ", ev.Tau)

@@ -1,21 +1,23 @@
  package scriptModeling
  
-//  import "fmt"
+ import "fmt"
  import "math/rand"
  import "math"
  
  
  func pick_invcount(v [numTop-1]int) int {
    newV := rand.Intn(len(v))
-//      fmt.Println("\n\nResampling v=", v , " for eventtype", newV)
    return newV
  }
  
  func (sampler *Sampler) Resample_v(esd *ESD) {
+   fmt.Println("\n\nResampling v=", esd.V)
+   var docLikelihoods []float64
+   var newV, oldLabelIdx int
    oldESD := esd.Copy()
+   oldDL := sampler.documentLikelihood(oldESD.Label)
    for target, _ := range(esd.V) {
      var proposedV [numTop-1]int
-     var newV int
      var documentLikelihood, gmm, distTotal, totalgmm, totaldoclikelihood, gmax, dmax, distMax float64
      proposedLabels := make([]Label, numTop-target)
      sampler.Model.UpdateEventWordCounts(esd.Label, -1)
@@ -27,10 +29,16 @@
      }
      proposedV = esd.V
      distribution := make([]float64, numTop-target)
-     docLikelihoods := make([]float64, numTop-target)
+     docLikelihoods = make([]float64, numTop-target)
      // try every possible value
      for k:=0 ; k<numTop-target ; k++ {
+       
        proposedV[target]=k 
+       
+       if target==0 && proposedV[target]==esd.V[target] {
+	 oldLabelIdx = k
+       }
+       
        // NOTE: I am using 'k+1' below as my topicIDs start with 0 ...shouldn't matter, right???
        gmm = -sampler.Model.rho[target] * float64(k+1)
        // compute documentLikelihood if eventtype for which inv count is resampled is realized in esd
@@ -45,8 +53,14 @@
      
      for idx,_ := range(distribution) {
        docLikelihoods[idx]=math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
+       
+       if target ==0 && idx == oldLabelIdx {
+	 oldDL = docLikelihoods[idx]
+       }
+       
        distribution[idx] = math.Log(math.Exp(distribution[idx]-gmax)/totalgmm) + math.Log(docLikelihoods[idx])
      }
+     
      distMax, distTotal = computeNorm(distribution)
 
      for idx,_ := range(distribution) {
@@ -62,11 +76,11 @@
      sampler.Model.invcount_histogram[target] += esd.V[target]
      sampler.Model.UpdateEventWordCounts(esd.Label, 1)
      sampler.Model.UpdateEventParticipantCounts(esd.Label, 1)
-     // check whether words have changed class; if so: resample eta
    }
+   // check whether words have changed class; if so: resample eta
    diff := oldESD.compareTo(*esd)
    diff2 := esd.compareTo(oldESD)
    if  len(diff) > 0 {
-     sampler.updateEta(diff, diff2, "event")
+     sampler.updateEta(diff, math.Log(docLikelihoods[newV]), diff2, math.Log(oldDL), "event")
    }
  }

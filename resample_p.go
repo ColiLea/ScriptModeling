@@ -27,13 +27,13 @@
      }
    }
    target := rand.Intn(len(events[:idx]))
-//    fmt.Println("\n\nResampling for participants in eventtype", events[target], "=", label[events[target]].Participants)
+   fmt.Println("\n\nResampling for participants in eventtype", events[target], "=", label[events[target]].Participants)
    return events[target]
  }
  
  
  func (sampler *Sampler) Resample_p(esd *ESD, eventID int) {
-   var pIdx int
+   var pIdx, oldV int
    participants := make([]int, len(esd.Label[eventID].Participants))
    for idx,val := range(esd.Label[eventID].Tau) {
      if val==1 {
@@ -49,7 +49,6 @@
      var newV int
      target := pID
      eIdx := 0
-//      fmt.Println("...participant type", target)
      // Decrement Counts
      sampler.Model.participanttype_histogram[target]--
      sampler.Model.participanttype_eventtype_histogram[target][eventID]--
@@ -72,14 +71,16 @@
 	 if val==0 {
 	   tempESD.flipp(target, idx, eventID)
 	   tempESD.UpdateLabelingP(eventID, target, idx)
+	 } else {
+	   oldV=eIdx
 	 }
 	 lgamma = 0.0
 	 for i:=0 ; i<numPar ; i++ {
 	   update = 0.0
 	   if i==idx {update = 1.0}
 	   pPositive,_ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[i][eventID]) + sampler.participantPosPrior + update)
-	   pNegative,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][eventID]) + sampler.participantNegPrior - update)
-	   pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior)
+	   pNegative,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][eventID]) + sampler.participantNegPrior)
+	   pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior + update)
 	   lgamma += ((pPositive+pNegative)-pNormalize)
 	 }
 	 documentLikelihood = sampler.documentLikelihoodP(eventID, idx, tempESD.Label)
@@ -95,19 +96,22 @@
      docLikelihoods=docLikelihoods[:eIdx]
      tempESDs=tempESDs[:eIdx]
      alts=alts[:eIdx]
-     
+
      pmax, totalgamma = computeNorm(distribution)
      dmax, totaldoclikelihood = computeNorm(docLikelihoods)
-     
+
      for idx,_ := range(distribution) {
        docLikelihoods[idx]=math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
+//        fmt.Println(math.Exp(distribution[idx]-pmax)/totalgamma, docLikelihoods[idx])
        distribution[idx] = math.Log(math.Exp(distribution[idx]-pmax)/totalgamma) + math.Log(docLikelihoods[idx])
      }
+     
      distMax,distTotal = computeNorm(distribution)
      for idx,_ := range(distribution) {
        distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
      }
      newV = sample(distribution)
+     fmt.Println("PTEST", distribution[newV], distribution)
      if newV == -1 {
        esd.Print()
        fmt.Println(sampler.ParticipantlmPriors)
@@ -117,7 +121,7 @@
      diff := esd.compareToP(tempESDs[newV]) 
      diff2 := tempESDs[newV].compareToP(*esd)
      if  len(diff) > 0 {
-       sampler.updateEta(diff, diff2 ,"participant")
+       sampler.updateEta(diff, math.Log(docLikelihoods[newV]), diff2, math.Log(docLikelihoods[oldV]), "participant")
      }
      //update esd and model
      *esd = tempESDs[newV]

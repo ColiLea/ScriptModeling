@@ -22,8 +22,8 @@ type Sampler struct {
 }
 
 
-func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float64, rho0 float64, nu0 float64, model Model, cov string) *Sampler {
-  
+func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float64, rho0 float64, nu0 float64, model Model, cov string, scenario string) *Sampler {
+   
   covarianceFlag := strings.Split(cov , " ")
   
   sampler := new(Sampler)
@@ -35,12 +35,14 @@ func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float
   
   if covarianceFlag[0]=="load" {
     sampler.covariances.matrix = leaMatrix.LoadCovariance(covarianceFlag[1])
+    vocabulary = LoadVocabulary("/local/lea/thesis/data/corpus/vocab/"+scenario+".bin")
+    fmt.Println(vocabulary)
   } else {
+    fmt.Println(vocabulary)
     sampler.covariances.matrix = *getCovarianceMatrix(covarianceFlag[1])
   }
+  fmt.Println(vocabulary)
   sampler.covariances.getEquivalenceClasses()
-  fmt.Println(sampler.covariances.matrix.InverseStr)
-  fmt.Println(sampler.covariances.matrix.DataStr)
   sampler.covariances.Print()
   sampler.eventEtas, sampler.EventlmPriors  = sampler.initializeEta(numTop)
   sampler.participantEtas, sampler.ParticipantlmPriors = sampler.initializeEta(numPar)
@@ -80,7 +82,8 @@ func (sampler *Sampler)initializeEta(classes int) (eta, prior [][]float64) {
     eta[classIdx] = make([]float64, len(vocabulary.VList))
     prior[classIdx] = make([]float64, len(vocabulary.VList))
     for wordIdx, _ := range(eta[classIdx]) {
-      prior[classIdx][wordIdx] = 1.0/float64(len(vocabulary.VList))
+//       prior[classIdx][wordIdx] = 1.0/float64(len(vocabulary.VList))
+      prior[classIdx][wordIdx] = 0.1
     }
   }
   return eta, prior
@@ -88,16 +91,18 @@ func (sampler *Sampler)initializeEta(classes int) (eta, prior [][]float64) {
 
 
 func (sampler *Sampler)updatePrior(class int, mode string) {
-  var normalizer float64
+  var normalizer, exponent float64
   if mode == "event" {
     normalizer = expSum(sampler.eventEtas[class])
     for wordIdx, _ := range(sampler.EventlmPriors[class]) {
-      sampler.EventlmPriors[class][wordIdx] = math.Exp(sampler.eventEtas[class][wordIdx])/normalizer
+      exponent = math.Exp(sampler.eventEtas[class][wordIdx])
+      sampler.EventlmPriors[class][wordIdx] = exponent/normalizer
     }
   } else {
     normalizer = expSum(sampler.participantEtas[class])
     for wordIdx, _ := range(sampler.ParticipantlmPriors[class]) {
-      sampler.ParticipantlmPriors[class][wordIdx] = math.Exp(sampler.participantEtas[class][wordIdx])/normalizer
+      exponent = math.Exp(sampler.participantEtas[class][wordIdx])
+      sampler.ParticipantlmPriors[class][wordIdx] = exponent/normalizer
     }
   }
 }

@@ -30,6 +30,7 @@
        wordNorm,_ = math.Lgamma(float64(typeWordTotal) + sum(sampler.EventlmPriors[k]) + float64(len(label[k].Words)))
        documentLikelihood += (wordFactor - wordNorm)
      }
+//    fmt.Println("DD", wordFactor, wordNorm, documentLikelihood)
    return documentLikelihood
  }
 
@@ -77,20 +78,42 @@ func computeDelta(term int, words []int) (update int) {
 func (sampler *Sampler) wordLikelihood(class int, mode string) float64 {
   var wordTypeFactor, wordFactor, wordNorm float64
   var typeWordTotal int
+  var target float64
+  var normalizer []float64
   if mode == "participant" {
-    for term, histogram := range(sampler.Model.word_participanttype_histogram) {
-      typeWordTotal += histogram[class]
-      wordTypeFactor,_ = math.Lgamma(float64(histogram[class])+sampler.ParticipantlmPriors[class][term])
-      wordFactor += wordTypeFactor
+    normalizer = make([]float64, numTop)
+    for k:=0 ; k<numTop ; k++ {
+      wordNorm = 0
+      wordTypeFactor = 0
+      typeWordTotal = 0
+      for term, histogram := range(sampler.Model.word_participanttype_histogram) {
+	typeWordTotal += histogram[k]
+	wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.ParticipantlmPriors[k][term])
+	wordFactor += wordTypeFactor
+      }
+      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + sum(sampler.ParticipantlmPriors[k]))
+      if k==class {
+	target = (wordFactor - wordNorm)
+      }
+      normalizer[k] = (wordFactor - wordNorm)
     }
-    wordNorm,_ = math.Lgamma(float64(typeWordTotal) + sum(sampler.ParticipantlmPriors[class]))
   } else {
-    for term, histogram := range(sampler.Model.word_eventtype_histogram) {
-      typeWordTotal += histogram[class]
-      wordTypeFactor,_ = math.Lgamma(float64(histogram[class])+sampler.EventlmPriors[class][term])
-      wordFactor += wordTypeFactor
+    for k:=0 ; k<numPar ; k++ {
+      normalizer = make([]float64, numPar)
+      wordNorm = 0
+      wordTypeFactor = 0
+      typeWordTotal = 0      
+      for term, histogram := range(sampler.Model.word_eventtype_histogram) {
+	typeWordTotal += histogram[class]
+	wordTypeFactor,_ = math.Lgamma(float64(histogram[class])+sampler.EventlmPriors[class][term])
+	wordFactor += wordTypeFactor
+      }
+      wordNorm,_ = math.Lgamma(float64(typeWordTotal) + sum(sampler.EventlmPriors[class]))
+      if k == class {
+	target = (wordFactor - wordNorm)
+      }
+      normalizer[k] = (wordFactor - wordNorm)
     }
-    wordNorm,_ = math.Lgamma(float64(typeWordTotal) + sum(sampler.EventlmPriors[class]))
   }
-  return (wordFactor - wordNorm)
+  return math.Log(math.Exp(target) / expSum(normalizer))
 }

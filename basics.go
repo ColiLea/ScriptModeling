@@ -2,7 +2,7 @@
 
 import "math"
 import "math/rand"
-// import "fmt"
+import "fmt"
 
 type Histogram []int
 type Distribution []float64
@@ -13,11 +13,23 @@ func newHistogram(topics int) Histogram {
 
 // samples from a normalized distribution; returns the INDEX of the value sampled
 func sample(distribution []float64) int {
+//   rand := rand.Float64()
+//   fmt.Println(rand)
+//   sum := 0.0
+//   for idx,val := range(distribution) {
+//     sum += val
+//     if rand <= sum {
+//       return idx
+//     }
+//   }
+//   return -1
+// }
   distribution_sum := 0.0
   for _, v := range distribution {
     distribution_sum += v
   }
   choice := rand.Float64() * float64(distribution_sum)
+  fmt.Println(choice)
   sum_so_far := 0.0
   for i, v := range distribution {
     sum_so_far += v
@@ -53,7 +65,7 @@ func getAccumulativeSample(distribution Distribution) int {
 
 
 func computeNorm(dist []float64) (max, norm float64) {
-  max=0.0
+  max=math.Inf(-1)
   for _,v := range(dist) {
     if v > max {
       max=v

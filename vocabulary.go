@@ -5,9 +5,10 @@ import "os/exec"
 import "strings"
 import "leaMatrix"
 
-type vocabMap struct {
-  vtoi map[string]int
-  itov map[int]string
+
+type VocabMap struct {
+  Vtoi map[string]int
+  Itov map[int]string
   VList []string
   POSList []string
 }
@@ -17,19 +18,39 @@ type similarities struct {
   equivalenceClasses map[int][]int
 }
 
-var vocabulary vocabMap
+var vocabulary VocabMap
 var vocabIdx int
 
-func (voc vocabMap) add(words []string, mode string) {
-  for _,word := range(words) {
-    if _,ok := voc.vtoi[word]; !ok {
-      voc.VList[vocabIdx] = word
-      voc.vtoi[word]=vocabIdx
-      voc.itov[vocabIdx]=word
-      voc.POSList[vocabIdx]=mode
-      vocabIdx++
+// stem words and add them to vocabulary
+func (vocabulary VocabMap) add(words []string, mode string) (wordIDs []int) {
+  var lemma string
+  wordIDs = make([]int, len(words))
+  for idx, word := range(words) {
+    if _, ok := vocabulary.Vtoi[word]; ok {
+      wordIDs[idx]=vocabulary.Vtoi[word]
+    } else {
+      python := new(exec.Cmd)
+      args := []string{"lemmatizer.py", "--vocabulary"}
+      args = append(args, word)
+      args = append(args,"--pos")
+      args = append(args, mode)
+      python.Args = args
+//       python.Path = "/home/lea/Code/Python/lemmatizer.py"
+      python.Path = "/local/lea/thesis/python/lemmatizer.py"
+      out, _ := python.Output()
+      lemma = strings.Trim(string(out), "\n")
+      if _, ok := vocabulary.Vtoi[lemma]; !ok {
+	fmt.Println(vocabIdx)
+	vocabulary.VList[vocabIdx] = lemma
+	vocabulary.Vtoi[lemma]=vocabIdx
+	vocabulary.Itov[vocabIdx]=lemma
+	vocabulary.POSList[vocabIdx]=mode
+	vocabIdx++
+      }
+      wordIDs[idx]=vocabulary.Vtoi[lemma]
     }
   }
+  return wordIDs
 }
 
 func GetVocabulary() []string {
@@ -37,14 +58,16 @@ func GetVocabulary() []string {
 }
 
 func getCovarianceMatrix(outFile string) (matrix *leaMatrix.Matrix) {
-  args := []string{"wnCovarianceT1.py", "--vocabulary"}
+  fmt.Println(vocabulary.VList)
+  fmt.Println(vocabulary.POSList)
+  args := []string{"wnCovarianceSvsH.py", "--vocabulary"}
   args = append(args, vocabulary.VList...)
   args = append(args, "--pos")
   args = append(args, vocabulary.POSList...)
   cmd := new(exec.Cmd)
   cmd.Args = args
 //   cmd.Path = "/home/lea/Code/Python/wnCovariance.py"
-  cmd.Path = "/local/lea/thesis/python/wnCovarianceNoPOS.py"
+  cmd.Path = "/local/lea/thesis/python/wnCovarianceSvsH.py"
   out,err := cmd.Output()
   fmt.Println(string(out))
   if err != nil {
@@ -72,7 +95,7 @@ func (sim *similarities) getEquivalenceClasses() {
     for w2ID, value := range(sim.matrix.Data[wordID]) {
       if value > threshold {
 	sim.equivalenceClasses[wordID][simIdx]=w2ID
-	fmt.Println(vocabulary.itov[wordID], vocabulary.itov[w2ID], value)
+	fmt.Println(vocabulary.Itov[wordID], vocabulary.Itov[w2ID], value)
 	simIdx++
       }
     }
@@ -82,9 +105,9 @@ func (sim *similarities) getEquivalenceClasses() {
 
 func (sim *similarities) Print() {
   for key, val := range(sim.equivalenceClasses) {
-    fmt.Println(vocabulary.itov[key])
+    fmt.Println(vocabulary.Itov[key])
     for _, wID := range(val) {
-      fmt.Println("	", vocabulary.itov[wID])
+      fmt.Println("	", vocabulary.Itov[wID])
     }
   }
 }

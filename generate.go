@@ -9,7 +9,7 @@ func (model *Model) Generate(jPrior, lmPrior float64) *ESD {
   var wList []int
   const modelTop int = 3
   const modelPar int = 3
-  vocabulary = vocabMap{map[string]int{"add":1, "serve":2, "boil":0, "water":5, "salt":6, "pasta":3, "noodle":4, "cook":7}, map[int]string{7:"cook", 0:"boil", 1:"add", 2:"serve", 3:"pasta", 4:"noodle", 5:"water", 6:"salt"}, []string{"boil","add","serve","pasta","noodle","water","salt", "cook"}, []string{"v", "v", "v", "n", "n", "n", "n", "v"}}
+  vocabulary = VocabMap{map[string]int{"add":1, "serve":2, "boil":0, "water":5, "salt":6, "pasta":3, "noodle":4, "cook":7}, map[int]string{7:"cook", 0:"boil", 1:"add", 2:"serve", 3:"pasta", 4:"noodle", 5:"water", 6:"salt"}, []string{"boil","add","serve","pasta","noodle","water","salt", "cook"}, []string{"v", "v", "v", "n", "n", "n", "n", "v"}}
   rho := [2]float64{5.9, 5.9}
   tmpPtau := [numPar]int{}
   esd := new(ESD)
