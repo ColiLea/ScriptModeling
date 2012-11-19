@@ -79,8 +79,8 @@
 	   update = 0.0
 	   if i==idx {update = 1.0}
 	   pPositive,_ = math.Lgamma(float64(sampler.Model.participanttype_eventtype_histogram[i][eventID]) + sampler.participantPosPrior + update)
-	   pNegative,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][eventID]) + sampler.participantNegPrior)
-	   pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior + update)
+	   pNegative,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i]-sampler.Model.participanttype_eventtype_histogram[i][eventID]) + sampler.participantNegPrior - update)
+	   pNormalize,_ = math.Lgamma(float64(sampler.Model.participanttype_histogram[i])+sampler.participantPosPrior+sampler.participantNegPrior)
 	   lgamma += ((pPositive+pNegative)-pNormalize)
 	 }
 	 documentLikelihood = sampler.documentLikelihoodP(eventID, idx, tempESD.Label)
@@ -118,6 +118,7 @@
        fmt.Println(sampler.EventlmPriors)
      }
      // resample eta
+//         fmt.Println(oldV)
      diff := esd.compareToP(tempESDs[newV]) 
      diff2 := tempESDs[newV].compareToP(*esd)
      if  len(diff) > 0 {

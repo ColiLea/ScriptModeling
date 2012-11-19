@@ -169,6 +169,7 @@ func getDiffList(eLabel []int) (dList []int) {
 func GetModel() *Model {
   // 0:boil,heat	1:add		2:serve
   // 0:pasta		1:salt		2:water
+  // "boil":0, "add":1, "serve":2, "pasta":3, "noodle":4, "water":5, "salt":6, "cook":7
   model := new(Model)
   model.numESDs = 20
   model.eventVocabulary = 4

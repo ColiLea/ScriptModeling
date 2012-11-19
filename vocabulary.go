@@ -40,7 +40,6 @@ func (vocabulary VocabMap) add(words []string, mode string) (wordIDs []int) {
       out, _ := python.Output()
       lemma = strings.Trim(string(out), "\n")
       if _, ok := vocabulary.Vtoi[lemma]; !ok {
-	fmt.Println(vocabIdx)
 	vocabulary.VList[vocabIdx] = lemma
 	vocabulary.Vtoi[lemma]=vocabIdx
 	vocabulary.Itov[vocabIdx]=lemma

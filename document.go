@@ -199,3 +199,20 @@ func (esd *ESD) Print() {
   fmt.Println("Pi  : ", esd.Pi)
   fmt.Println("eLab: ", esd.EventLabel)
 }
+
+
+func (label Label) Print() {
+  for eID,ev := range(label) {
+    fmt.Println(eID)
+    for _, word := range(ev.Words) {
+      fmt.Println("  ", vocabulary.Itov[word])
+    }
+    for pID, w := range(ev.Participants) {
+      fmt.Println("    ", pID)
+      for _, word := range(w) {
+	fmt.Println("      ", vocabulary.Itov[word])
+      }
+    }
+    fmt.Println("    ", ev.Tau)
+  }
+}

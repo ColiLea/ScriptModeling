@@ -17,9 +17,8 @@ func (sampler *Sampler)Resample_eta(eta []float64, i int, docLikelihood float64)
   }
   
   slicesampler := getSliceSampler([]string{"1", "3", "@normalposterior", strconv.FormatFloat(eta[i], 'f', -1 , 64), "2", "false", String(eta), strconv.Itoa(i+1), sampler.covariances.matrix.InverseStr, strconv.FormatFloat(docLikelihood, 'f', -1, 64)})
-
+  
   //try up to 10 times
-    
   for i:= 0 ; i<10 ; i++ {
     cmdIn.Write(slicesampler)
     out, err := cmdOut.ReadString('\n')

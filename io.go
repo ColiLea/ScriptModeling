@@ -20,8 +20,7 @@ func GetCorpus (xmlDir, scenario string) (corpus Corpus) {
 //   corpus := Corpus{}
   for _, file := range(contents) {
     scenarios := ReadScenarios(path.Join(xmlDir, file.Name()))
-    for ii,scenario := range(scenarios.Script) {
-      fmt.Println("esd no. ", ii)
+    for _,scenario := range(scenarios.Script) {
       esd := createESD(scenario)
       corpus = append(corpus, &esd)
     }

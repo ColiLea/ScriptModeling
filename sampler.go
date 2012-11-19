@@ -22,7 +22,7 @@ type Sampler struct {
 }
 
 
-func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float64, rho0 float64, nu0 float64, model Model, cov string, scenario string) *Sampler {
+func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float64, rho0 float64, nu0 float64, model Model, cov string, scenario string, mode int) *Sampler {
    
   covarianceFlag := strings.Split(cov , " ")
   
@@ -35,10 +35,10 @@ func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float
   
   if covarianceFlag[0]=="load" {
     sampler.covariances.matrix = leaMatrix.LoadCovariance(covarianceFlag[1])
-    vocabulary = LoadVocabulary("/local/lea/thesis/data/corpus/vocab/"+scenario+".bin")
-    fmt.Println(vocabulary)
+    if mode != 0 {
+      vocabulary = LoadVocabulary("/local/lea/thesis/data/corpus/vocab/"+scenario+".bin")
+    }
   } else {
-    fmt.Println(vocabulary)
     sampler.covariances.matrix = *getCovarianceMatrix(covarianceFlag[1])
   }
   fmt.Println(vocabulary)
@@ -48,7 +48,11 @@ func NewSampler(ePprior float64, eNprior float64, pPprior float64, pNprior float
   sampler.participantEtas, sampler.ParticipantlmPriors = sampler.initializeEta(numPar)
   sampler.nu_0 = nu0*float64(sampler.Model.numESDs)
   sampler.v_0 = vPrior(rho0)
+//   for idx,_ := range(sampler.Model.rho) {
+//     sampler.Model.rho[idx]=float64((numTop-idx)/100)
+//   }
   sampler.Resample_rho()
+  fmt.Println("!!!!!!!!!!!!!!!", sampler.Model.rho)
   return sampler
 }
 
@@ -82,8 +86,8 @@ func (sampler *Sampler)initializeEta(classes int) (eta, prior [][]float64) {
     eta[classIdx] = make([]float64, len(vocabulary.VList))
     prior[classIdx] = make([]float64, len(vocabulary.VList))
     for wordIdx, _ := range(eta[classIdx]) {
-//       prior[classIdx][wordIdx] = 1.0/float64(len(vocabulary.VList))
-      prior[classIdx][wordIdx] = 0.1
+      prior[classIdx][wordIdx] = 1.0/float64(len(vocabulary.VList))
+//       prior[classIdx][wordIdx] = 0.1
     }
   }
   return eta, prior

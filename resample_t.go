@@ -68,8 +68,8 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
 	if k==tIdx {update=1.0}
 	// compute P(model|flip)
 	tPositive,_ = math.Lgamma(float64(sampler.Model.eventtype_histogram[k])+sampler.eventPosPrior+update)
-	tNegative,_ = math.Lgamma(float64(sampler.Model.numESDs-sampler.Model.eventtype_histogram[k])+sampler.eventNegPrior)
-	tNormalize,_ = math.Lgamma(float64(sampler.Model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior + update)
+	tNegative,_ = math.Lgamma(float64(sampler.Model.numESDs-sampler.Model.eventtype_histogram[k])+sampler.eventNegPrior-update)
+	tNormalize,_ = math.Lgamma(float64(sampler.Model.numESDs)+sampler.eventPosPrior+sampler.eventNegPrior)
 	lgamma += ((tPositive+tNegative)-tNormalize)
       }
       // compute P(document|flip)  <<== THIS SHOULD BE INSIDE THE LOOP & THE LOOP INSIDE THE DOCLIKELIHOOD SHOULD BE GONE!?!?!
@@ -110,6 +110,7 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
        fmt.Println(sampler.EventlmPriors)
   }
   // check whether words have changed class; if so: resample eta
+//      fmt.Println(oldLabel)
   diff := esd.compareTo(tempESDs[newLabel])
   diff2 := tempESDs[newLabel].compareTo(*esd)
   if  len(diff) > 0 {

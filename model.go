@@ -2,6 +2,9 @@ package scriptModeling
 
 import "fmt"
 
+// noodle/telepnone T:30 P:40
+// toy.xml P:15 T:15
+
 const numTop int = 15
 const numPar int = 15
 
