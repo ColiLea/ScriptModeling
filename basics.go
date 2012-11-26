@@ -2,7 +2,7 @@
 
 import "math"
 import "math/rand"
-import "fmt"
+// import "fmt"
 
 type Histogram []int
 type Distribution []float64
@@ -13,23 +13,11 @@ func newHistogram(topics int) Histogram {
 
 // samples from a normalized distribution; returns the INDEX of the value sampled
 func sample(distribution []float64) int {
-//   rand := rand.Float64()
-//   fmt.Println(rand)
-//   sum := 0.0
-//   for idx,val := range(distribution) {
-//     sum += val
-//     if rand <= sum {
-//       return idx
-//     }
-//   }
-//   return -1
-// }
   distribution_sum := 0.0
   for _, v := range distribution {
     distribution_sum += v
   }
   choice := rand.Float64() * float64(distribution_sum)
-  fmt.Println(choice)
   sum_so_far := 0.0
   for i, v := range distribution {
     sum_so_far += v
@@ -122,13 +110,7 @@ func updateLabelingT(oldVal int, newVal int, label Label) Label {
 func UpdateLabelingV(tau [numTop]int, pi [numTop]int, eventLabel []int, label Label) Label {
   newZ := computeZ(tau, pi)
   newLabel := make(Label, len(label))
-  update:=false
-  for idx,_ := range(newZ) {
-    if newZ[idx] != eventLabel[idx] {
-      update=true
-    }
-  }
-  if update==false {
+  if Compare(newZ, eventLabel) == true {
     return label
   } else {
     contents := make([]Content, len(label))
@@ -165,11 +147,11 @@ func isIn(el int, list []int) bool {
 }
 
 func sum(numbers []float64) float64 {
-  sum := 0.0
+  sum1 := 0.0
   for _, number := range(numbers) {
-    sum += number
+    sum1 += number
   }
-  return sum
+  return sum1
 }
 
 func expSum(priors []float64) float64 {

@@ -1,31 +1,21 @@
- package scriptModeling
+package scriptModeling
  
- 
-import "fmt"
-import "strconv"
-import "strings"
+// import "fmt"
+import "sliceSampler"
 
 func (sampler *Sampler)Resample_rho() {
 //   fmt.Println("Resampling Rho")
-  var v_0, nu_0 float64
-  var totalV, numDocs, nminusj int
-  var slicesampler []byte
-  for idx,target := range(sampler.Model.rho) {
+  var v_0, nu_0, totalV, numDocs, nminusj float64
+  for idx,target := range(sampler.Model.Rho) {
     lastRho := target
     target := idx
-    totalV = sampler.Model.invcount_histogram[target]
+    totalV = float64(sampler.Model.Invcount_histogram[target])
     v_0 = sampler.v_0[target]
     nu_0 = sampler.nu_0
-    numDocs = sampler.Model.numESDs
-    nminusj = numTop-target
+    numDocs = float64(sampler.Model.NumESDs)
+    nminusj = float64(numTop-target)
 
-    slicesampler = getSliceSampler([]string{"1", "3", "@logposterior", strconv.FormatFloat(lastRho, 'f', -1 , 64), "5", "false", strconv.Itoa(totalV), strconv.FormatFloat(v_0, 'f', -1, 64), strconv.FormatFloat(nu_0, 'f', -1, 64), strconv.Itoa(numDocs), strconv.Itoa(nminusj)})
-    cmdIn.Write(slicesampler)
-    out, err := cmdOut.ReadString('\n')
-    newRho,_ := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
-    sampler.Model.rho[idx]=newRho
-    if err != nil {
-      fmt.Println(err)
-    }
+    newRho := sliceSampler.SampleRho(3, 5.0, lastRho, false, totalV, v_0, nu_0, numDocs, nminusj)
+    sampler.Model.Rho[idx]=newRho
   }
 }
