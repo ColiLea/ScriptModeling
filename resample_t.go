@@ -12,14 +12,66 @@ func pick_event(tau [numTop]int) int {
     el = rand.Intn(len(tau))
     alt = tau[el]
   }
-//   fmt.Println("\n\nResampling t=", tau , " for eventtype", el)
   return el
 }
 
+
+
+
 func (sampler *Sampler) Resample_t(esd *ESD, target int) {
-    
-  var update, lgamma, totalgamma, totaldoclikelihood, distTotal, documentLikelihood, tPositive, tNegative, tNormalize, tmax, dmax, distMax float64
-  var newLabel, oldLabel int
+  var newLabel/*, oldLabel*/ int
+  
+  eventLikelihoods, participantLikelihoods, docLikelihoods, alts, tempESDs, /*oldLabel*/ _ := sampler.getDistributionsE(esd, target)
+  
+  // get final distribution
+  distribution := make([]float64, len(eventLikelihoods))
+  for idx,_ := range(eventLikelihoods) {
+    distribution[idx]=math.Log(eventLikelihoods[idx])+math.Log(participantLikelihoods[idx])+math.Log(docLikelihoods[idx])
+  }
+  distMax, distTotal := computeNorm(distribution)
+  for idx,_ := range(distribution) {
+    distribution[idx] = math.Exp(distribution[idx]-distMax)/distTotal
+  }
+  
+  // sample new label
+  newLabel = sample(distribution)
+  
+//   fmt.Println("event", eventLikelihoods)
+//   fmt.Println("ptcpt", participantLikelihoods)
+//   fmt.Println("words", docLikelihoods)
+  
+  if newLabel == -1 {
+       esd.Print()
+  }
+  // check whether words have changed class; if so: resample eta
+//   newWordLabels := esd.compareTo(tempESDs[newLabel])
+//   oldWordLabels := tempESDs[newLabel].compareTo(*esd)
+//   if  len(newWordLabels) > 0 {
+//      sampler.updateEta(newWordLabels, math.Log(docLikelihoods[newLabel]), "event")
+//      sampler.updateEta(oldWordLabels, math.Log(docLikelihoods[oldLabel]), "event")
+//   }
+  // update model & esd
+  
+   esd.Print()
+  
+   *esd = tempESDs[newLabel]
+   sampler.Model.Eventtype_histogram[alts[newLabel]]++
+   sampler.Model.UpdateEventWordCounts(esd.Label, 1)
+   sampler.Model.UpdateEventParticipantCounts(esd.Label, 1)
+   
+//    fmt.Println("T=", vocabulary.Dictionary.Itov[esd.Label[alts[newLabel]].Words[0]], target, alts[newLabel], "(with event", esd.Label[alts[newLabel]].Participants, ")")
+//    sampler.Model.Print()
+//    fmt.Println("\n\n")
+   
+//    sampler.GetFullPosterior(tempESDs, alts)
+//    
+//    fmt.Println("=======================================\n\n\n\n")
+}
+
+
+func (sampler *Sampler) getDistributionsE(esd *ESD, target int) (_, _, _ []float64, _ []int, _ []ESD, oldLabel int) {
+  
+  var totalgamma, totaldoclikelihood, totalptcpt, tmax, dmax, pmax float64
   
   // decrement counts for current target event, and ALL words in ESD, and ALL event-participant counts
   // ALL, since event order might change due to fixed v (ordering)
@@ -30,8 +82,10 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
     panic("Negative Event Count in resample_t")
   }
   
+  
   // compute switch-likelihood
-  distribution := make([]float64, numTop)
+  eventDist := make([]float64, numTop)
+  participantDist := make([]float64, numTop)
   docLikelihoods := make([]float64, numTop)
   tempESDs := make([]ESD, numTop)
   alts := make([]int, numTop)
@@ -49,70 +103,52 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
       } else {
 	oldLabel = eIdx
       }
-      lgamma = 0.0
-      for k:=0 ; k<numTop ; k++ {
-	//do p(e=k|...) = p(model|flip) * p(document|flip)
-	update=0.0
-	if k==tIdx {update=1.0}
-	// compute P(model|flip)
-	tPositive,_ = math.Lgamma(float64(sampler.Model.Eventtype_histogram[k])+sampler.eventPrior+update)
-	tNegative,_ = math.Lgamma(float64((sampler.Model.NumESDs)-sampler.Model.Eventtype_histogram[k])+sampler.eventPrior-update)
-	tNormalize,_ = math.Lgamma(float64(sampler.Model.NumESDs)+2*sampler.eventPrior)
-	lgamma += ((tPositive+tNegative)-tNormalize)
+      
+      sampler.Model.Eventtype_histogram[tIdx]++
+      sampler.Model.UpdateEventParticipantCounts(tempESD.Label, 1)
+      
+      for ee,vv := range(tempESD.Label) {
+	eventDist[eIdx] += sampler.updateComponentE(tIdx)
+	for pID,_ := range(vv.Participants) {
+	  participantDist[eIdx] += sampler.updateComponentP(pID, ee)	  
+	}
       }
-      // compute P(document|flip)  <<== THIS SHOULD BE INSIDE THE LOOP & THE LOOP INSIDE THE DOCLIKELIHOOD SHOULD BE GONE!?!?!
-      documentLikelihood = sampler.documentLikelihood(tempESD.Label)
-      distribution[eIdx]=lgamma
-      docLikelihoods[eIdx]=documentLikelihood
+      sampler.Model.UpdateEventParticipantCounts(tempESD.Label, -1)
+      sampler.Model.Eventtype_histogram[tIdx]--
+      
+      docLikelihoods[eIdx] = sampler.documentLikelihood(tempESD.Label)
       tempESDs[eIdx]=tempESD
       alts[eIdx]=tIdx
       eIdx++
     }
   }
   
-  distribution=distribution[:eIdx]
+  eventDist=eventDist[:eIdx]
+  participantDist=participantDist[:eIdx]
   docLikelihoods=docLikelihoods[:eIdx]
   tempESDs=tempESDs[:eIdx]
   alts=alts[:eIdx]
-
-  tmax, totalgamma = computeNorm(distribution)
+  
+  tmax, totalgamma = computeNorm(eventDist)
   dmax, totaldoclikelihood = computeNorm(docLikelihoods)
+  pmax, totalptcpt = computeNorm(participantDist)
   
-  
-  tmpDist:= make([]float64, len(distribution))
-  for idx,_ := range(distribution) {
+  for idx,_ := range(eventDist) {
     docLikelihoods[idx] = math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
-    tmpDist[idx] = math.Exp(distribution[idx]-tmax)/totalgamma
-    distribution[idx] = math.Log(math.Exp(distribution[idx]-tmax)/totalgamma) + math.Log(docLikelihoods[idx])
+    eventDist[idx] = math.Exp(eventDist[idx]-tmax)/totalgamma
+    participantDist[idx] = math.Exp(participantDist[idx]-pmax)/totalptcpt
   }
-  
-  distMax, distTotal = computeNorm(distribution)
-  for idx,_ := range(distribution) {
-    distribution[idx] = math.Exp(distribution[idx]-distMax)/distTotal
+  return eventDist, participantDist, docLikelihoods, alts, tempESDs, oldLabel
+}
+
+
+func (sampler *Sampler) updateComponentE(targetEvent int) (lgamma float64) {
+  var tPositive, tNegative, tNormalize float64
+  for k:=0 ; k<numTop ; k++ {
+    tPositive,_ = math.Lgamma(float64(sampler.Model.Eventtype_histogram[k])+sampler.eventPrior)
+    tNegative,_ = math.Lgamma(float64((sampler.Model.NumESDs)-sampler.Model.Eventtype_histogram[k])+sampler.eventPrior)
+    tNormalize,_ = math.Lgamma(float64(sampler.Model.NumESDs)+2*sampler.eventPrior)
+    lgamma += ((tPositive+tNegative)-tNormalize)
   }
-  // sample new label
-  newLabel = sample(distribution)
-  if newLabel == -1 {
-       esd.Print()
-  }
-  /*
-     fmt.Println(sampler.vocabulary.Dictionary.Itov[esd.Label[target].Words[0]], target, alts[newLabel])
-     fmt.Println(distribution)
-     fmt.Println(docLikelihoods)
-     fmt.Println(tmpDist)*/
-  
-//   fmt.Println(oldLabel)
-  // check whether words have changed class; if so: resample eta
-  diff := esd.compareTo(tempESDs[newLabel])
-  diff2 := tempESDs[newLabel].compareTo(*esd)
-  
-  if  len(diff) > 0 {
-     sampler.updateEta(diff, math.Log(docLikelihoods[newLabel]), "event")
-     sampler.updateEta(diff2, math.Log(docLikelihoods[oldLabel]), "event")
-  }
-  // update model & esd
-   *esd = tempESDs[newLabel]
-   sampler.Model.Eventtype_histogram[alts[newLabel]]++
-   sampler.Model.UpdateEventWordCounts(esd.Label, 1)
-   sampler.Model.UpdateEventParticipantCounts(esd.Label, 1)
+  return lgamma
 }

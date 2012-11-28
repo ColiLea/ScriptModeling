@@ -17,7 +17,6 @@ type Sampler struct {
   Model Model
 }
 
-
 func NewSampler(ePrior float64, pPrior float64, rho0 float64, nu0 float64, model Model, scenario string, mode int) *Sampler {
   if mode == 2 {
     vocabulary = LoadVocabulary("/local/lea/thesis/data/vocabularies/"+scenario+".bin")
@@ -25,9 +24,15 @@ func NewSampler(ePrior float64, pPrior float64, rho0 float64, nu0 float64, model
     fmt.Println("Matr: \n", vocabulary.Covariances.Matrix)
     fmt.Println("Inve: \n", vocabulary.Covariances.Inverse)
     fmt.Println("Equi: ")
+  } else if mode==4 {
+    vocabulary.Covariances = new(CovarianceStruct)
+    vocabulary.Equivalences = EquivalenceStruct{}
+    vocabulary.Dictionary = Dictionary{map[string]int{"cook":0,"add":1,"serve":2,"water":3,"salt":4,"pasta":5}, map[int]string{0:"cook",1:"add",2:"serve",3:"water",4:"salt",5:"pasta"},[]string{"cook","add","serve","water","salt","pasta"}, []string{"v","v","v","n","n","n"}}
+    vocabulary.Covariances.Matrix = [][]float64{[]float64{1, 0.0192307692308, 0, 0, 0, 0}, []float64{0.0192307692308, 1, 0, 0, 0, 0}, []float64{0, 0, 1, 0, 0, 0}, []float64{0, 0, 0, 1, 0, 0}, []float64{0, 0, 0, 0, 1, 0}, []float64{0, 0, 0, 0, 0, 1}}
+    vocabulary.Covariances.Inverse = [][]float64{[]float64{1.0003699593, -0.0192378838328, 0, 0, 0, 0}, []float64{-0.0192378838328, 1.0003699593, 0, 0, 0, 0}, []float64{0, 0, 1, 0, 0, 0}, []float64{0, 0, 0, 1, 0, 0}, []float64{0, 0, 0, 0, 1, 0}, []float64{0, 0, 0, 0, 0, 1}}
+    vocabulary.Equivalences = map[int][]int{0:[]int{0}, 1:[]int{1}, 2:[]int{2}, 3:[]int{3}, 4:[]int{4}, 5:[]int{5}}
   }
   sampler := new(Sampler)
-  
   sampler.Model = model
   sampler.vocabulary = vocabulary
   sampler.vocabulary.Equivalences.Print()
@@ -70,7 +75,7 @@ func (sampler *Sampler)initializeEta(classes int) (eta, prior [][]float64) {
     eta[classIdx] = make([]float64, len(vocabulary.Dictionary.VList))
     prior[classIdx] = make([]float64, len(vocabulary.Dictionary.VList))
     for wordIdx, _ := range(eta[classIdx]) {
-      prior[classIdx][wordIdx] = 1.0/(float64(len(vocabulary.Dictionary.VList)))
+      prior[classIdx][wordIdx] = 1.0/10*(float64(len(vocabulary.Dictionary.VList)))
 //       prior[classIdx][wordIdx] = 0.01
     }
   }
@@ -94,3 +99,22 @@ func (sampler *Sampler)updatePrior(class int, mode string) {
     }
   }
 }
+
+
+// func (sampler *Sampler)FullPosterior(esds []ESD, labels []int) {
+//   eventWord := make([]float64, len(esds))
+//   ptcptWord := make([]float64, len(esds))
+//   eventLike := make([]float64, len(esds))
+//   ptcptLike := make([]float64, len(esds))
+//   for idx,_ := range(esds) {
+//     sampler.Model.Eventtype_histogram[alts[idx]]++
+//     sampler.Model.UpdateEventParticipantCounts(esds[idx],1)
+//     eventWord[idx] = sampler.updateComponentE(alts[idx])
+//     for
+//     ptcptWord[idx] += 
+//     sampler.Model.Eventtype_histogram[alts[idx]]--
+//     sampler.Model.UpdateEventParticipantCounts(esds[idx],-1)
+//   }
+// }
+
+

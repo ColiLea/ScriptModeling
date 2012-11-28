@@ -4,6 +4,7 @@ import "fmt"
 
 // noodle/telepnone T:30 P:40
 // toy.xml P:15 T:15
+// toy.easy P:15 T:10
 
 const numTop int = 10
 const numPar int = 15
