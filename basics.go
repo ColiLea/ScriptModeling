@@ -52,6 +52,17 @@ func getAccumulativeSample(distribution Distribution) int {
 }
 
 
+func max(dist []float64) int {
+  var pos int
+  max := 0.0
+  for idx, val := range(dist) {
+    if val > max {
+      pos = idx
+    }
+  }
+  return pos
+}
+
 func computeNorm(dist []float64) (max, norm float64) {
   max=math.Inf(-1)
   for _,v := range(dist) {

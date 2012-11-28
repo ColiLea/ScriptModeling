@@ -50,9 +50,10 @@ func NewSampler(ePrior float64, pPrior float64, rho0 float64, nu0 float64, model
 //   select which random variable to resample; 0:p  1:t  2:v  3:rho
 func (sampler *Sampler)PickVariable(esd *ESD) {	
   rr := rand.Intn(3)
+  fmt.Println(rr)
   if rr <=0 && esd.hasParticipants() {
     sampler.Resample_p(esd, Pick_participant(esd.Label))
-  } else if rr<=1 && len(esd.Label) < numTop {
+   } else if rr<=1 && len(esd.Label) < numTop {
     sampler.Resample_t(esd, pick_event(esd.Tau))
   } else{
     sampler.Resample_v(esd)
@@ -75,8 +76,8 @@ func (sampler *Sampler)initializeEta(classes int) (eta, prior [][]float64) {
     eta[classIdx] = make([]float64, len(vocabulary.Dictionary.VList))
     prior[classIdx] = make([]float64, len(vocabulary.Dictionary.VList))
     for wordIdx, _ := range(eta[classIdx]) {
-      prior[classIdx][wordIdx] = 1.0/10*(float64(len(vocabulary.Dictionary.VList)))
-//       prior[classIdx][wordIdx] = 0.01
+//       prior[classIdx][wordIdx] = 1.0/(10*(float64(len(vocabulary.Dictionary.VList))))
+      prior[classIdx][wordIdx] = 0.01
     }
   }
   return eta, prior

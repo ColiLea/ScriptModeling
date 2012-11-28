@@ -6,8 +6,8 @@ import "fmt"
 // toy.xml P:15 T:15
 // toy.easy P:15 T:10
 
-const numTop int = 10
-const numPar int = 15
+const numTop int = 4
+const numPar int = 3
 
 // Model type, Contains all priors; eventhistogram=counts of events; eventInvcounthistogram:eventspecific inversioncounts; wordEventhistogram:wordspecific eventcounts
 type Model struct {

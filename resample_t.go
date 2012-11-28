@@ -1,6 +1,6 @@
  package scriptModeling
  
-// import "fmt"
+import "fmt"
 import "math/rand"
 import "math"
 
@@ -34,7 +34,8 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
   }
   
   // sample new label
-  newLabel = sample(distribution)
+  newLabel = /*max(distribution)*/sample(distribution)
+  fmt.Println("T", newLabel)
   
 //   fmt.Println("event", eventLikelihoods)
 //   fmt.Println("ptcpt", participantLikelihoods)
@@ -51,8 +52,6 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
 //      sampler.updateEta(oldWordLabels, math.Log(docLikelihoods[oldLabel]), "event")
 //   }
   // update model & esd
-  
-   esd.Print()
   
    *esd = tempESDs[newLabel]
    sampler.Model.Eventtype_histogram[alts[newLabel]]++
@@ -106,6 +105,7 @@ func (sampler *Sampler) getDistributionsE(esd *ESD, target int) (_, _, _ []float
       
       sampler.Model.Eventtype_histogram[tIdx]++
       sampler.Model.UpdateEventParticipantCounts(tempESD.Label, 1)
+      sampler.Model.UpdateEventWordCounts(tempESD.Label, 1)
       
       for ee,vv := range(tempESD.Label) {
 	eventDist[eIdx] += sampler.updateComponentE(tIdx)
@@ -113,10 +113,13 @@ func (sampler *Sampler) getDistributionsE(esd *ESD, target int) (_, _, _ []float
 	  participantDist[eIdx] += sampler.updateComponentP(pID, ee)	  
 	}
       }
+      
+      docLikelihoods[eIdx] = sampler.documentLikelihood(tempESD.Label)
+      
+      sampler.Model.UpdateEventWordCounts(tempESD.Label, -1)
       sampler.Model.UpdateEventParticipantCounts(tempESD.Label, -1)
       sampler.Model.Eventtype_histogram[tIdx]--
       
-      docLikelihoods[eIdx] = sampler.documentLikelihood(tempESD.Label)
       tempESDs[eIdx]=tempESD
       alts[eIdx]=tIdx
       eIdx++

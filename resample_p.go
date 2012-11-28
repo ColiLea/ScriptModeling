@@ -2,7 +2,7 @@
  
  import "math/rand"
  import "math"
-//  import "fmt"
+ import "fmt"
  
  
  // check whether there are any participants in the esd
@@ -35,6 +35,7 @@
  func (sampler *Sampler) Resample_p(esd *ESD, eventID int) {
    var pIdx int
    var newV int
+   
    participants := make([]int, len(esd.Label[eventID].Participants))
    for idx,val := range(esd.Label[eventID].Tau) {
      if val==1 {
@@ -44,6 +45,11 @@
    }
    participants = participants[:pIdx]
    for _, pID := range(participants) {
+     
+     
+//    fmt.Println("====", eventID, "PARTICIPANT", pID)
+//    esd.Print()
+//    fmt.Println("====")
      
      modelLikelihoods, docLikelihoods, alts, tempESDs, /*oldV*/ _:= sampler.getDistributionsP(*esd, pID, eventID)
      
@@ -58,11 +64,12 @@
        distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
      }
      
+          
+     newV = /*max(distribution)*/sample(distribution)
      
-//      fmt.Println(modelLikelihoods)
-//      fmt.Println(docLikelihoods)
-     
-     newV = sample(distribution)
+   /*  fmt.Println(modelLikelihoods)
+     fmt.Println(docLikelihoods)     
+   */  fmt.Println("P", newV)
           
      if newV == -1 {
        esd.Print()
@@ -113,6 +120,7 @@
      alts = make([]int, numPar)
      
      for idx, val := range(esd.Label[eventID].Tau) {
+       
        if val==0 || idx==target {
 	 
 	 tempESD := esd.Copy()
@@ -123,15 +131,28 @@
 	 } else {
 	   oldV=eIdx
 	 }
-	 lgamma = 0.0
+// 	fmt.Println(idx, "\niiiiiiiiiiiiii")
+// 	tempESD.Print()
+// 	fmt.Println("iiiiiiiiiiiiiiii")
+// 	 fmt.Println("\n\n===================")
+// 	 sampler.Model.Print()
+	 
 	 sampler.Model.Participanttype_histogram[idx]++
+	 sampler.Model.UpdateParticipantWordCounts(idx, tempESD.Label[eventID].Participants[idx], 1)
+	 
+// 	 sampler.Model.Print()
+// 	 fmt.Println("=================\n\n")
+	 
 	 if sampler.Model.Eventtype_histogram[eventID]>0 {
 	   sampler.Model.Participanttype_eventtype_histogram[idx][eventID]++
 	   lgamma = sampler.updateComponentP(idx, eventID)
 	   sampler.Model.Participanttype_eventtype_histogram[idx][eventID]--
 	 }
-	 sampler.Model.Participanttype_histogram[idx]--
+	 
 	 documentLikelihood = sampler.documentLikelihoodP(eventID, idx, tempESD.Label)
+	 sampler.Model.Participanttype_histogram[idx]--
+	 sampler.Model.UpdateParticipantWordCounts(idx, tempESD.Label[eventID].Participants[idx], -1)
+	 
 	 distribution[eIdx]=lgamma
 	 docLikelihoods[eIdx]=documentLikelihood
 	 tempESDs[eIdx]=tempESD

@@ -1,6 +1,6 @@
  package scriptModeling
  
-//  import "fmt"
+ import "fmt"
  import "math/rand"
  import "math"
  
@@ -33,7 +33,8 @@
      }
      
      // sample new value
-     newV = getAccumulativeSample(distribution)
+     newV = /*max(distribution)*/sample(distribution)
+//      fmt.Println("V", newV)
      
 //      fmt.Println("\n", "resampling inv count for eventtype", target, "was", esd.V[target], "is", newV)
 //      fmt.Println(gmmLikelihoods)
@@ -44,6 +45,8 @@
      esd.V[target] = newV
      esd.Pi = computePi(esd.V)
      esd.UpdateLabelingT()
+     
+     fmt.Println("V", newV)
      
      // update model
      sampler.Model.Invcount_histogram[target] += esd.V[target]
@@ -66,7 +69,7 @@
  
  func (sampler *Sampler) getDistributionV(oldESD, esd ESD, target int) (distribution, participantLikelihoods, docLikelihoods []float64){
    
-   var documentLikelihood, gmm, gmax, totalgmm, dmax, totaldoclikelihood, pmax, totalp float64
+   var gmm, gmax, totalgmm, dmax, totaldoclikelihood, pmax, totalp float64
    proposedLabels := make([]Label, numTop-target)
    distribution = make([]float64, numTop-target)
    docLikelihoods = make([]float64, numTop-target)
@@ -100,15 +103,20 @@
      docLikelihoods[k]=1.0
      
      if isIn(target, oldESD.EventLabel) {
-       documentLikelihood = sampler.documentLikelihood(proposedLabels[k])
-       docLikelihoods[k]=documentLikelihood
        sampler.Model.UpdateEventParticipantCounts(proposedLabels[k], 1)
+       sampler.Model.UpdateEventWordCounts(proposedLabels[k], 1)
+       
+       docLikelihoods[k]=sampler.documentLikelihood(proposedLabels[k])
+       
        for ee,vv := range(proposedLabels[k]) {
 	 for pID,_ := range(vv.Participants) {
 	   participantLikelihoods[k] += sampler.updateComponentP(pID, ee)	  
 	 }
        }
+       
+       docLikelihoods[k] = sampler.documentLikelihood(proposedLabels[k])
        sampler.Model.UpdateEventParticipantCounts(proposedLabels[k], -1)
+       sampler.Model.UpdateEventWordCounts(proposedLabels[k], -1)
      }
    }
    gmax, totalgmm = computeNorm(distribution)
