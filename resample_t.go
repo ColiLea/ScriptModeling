@@ -94,6 +94,7 @@ func (sampler *Sampler) getDistributionsE(esd *ESD, target int) (_, _, _ []float
     }
   }
   fmt.Println("FULL", normalizeFullPosterior(fullPosterior[:eIdx]))
+  fmt.Println("Part-log", eventDist[:eIdx], participantDist[:eIdx], docLikelihoods[:eIdx])
   return expNormalized(eventDist[:eIdx]), expNormalized(participantDist[:eIdx]), expNormalized(docLikelihoods[:eIdx]), alts[:eIdx], tempESDs[:eIdx], oldLabel
 }
 
