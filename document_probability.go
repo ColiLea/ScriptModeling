@@ -7,7 +7,7 @@
  // all participant labelings will stay constant -> no need to compute them!
  func (sampler *Sampler) documentLikelihood(label Label) float64 {
    var wordTypeFactor, wordFactor, wordNorm float64
-   var typeWordTotal/*, update*/ int
+   var typeWordTotal int
    documentLikelihood := 0.0
    // iterate over eventtypes
      for k := 0 ; k<numTop ; k++ {
@@ -16,15 +16,12 @@
        // iterate over terms in event-vocab
        for term, histogram := range(sampler.Model.Word_eventtype_histogram) {
 	 typeWordTotal += histogram[k]
-	 // check if eventtype is realized as term and set 'update' accordingly
 	 // compute LGamma(N(word,event) + prior + udpate)
 	 wordTypeFactor,_ = math.Lgamma(float64(histogram[k])+sampler.EventlmPriors[k][term])
-	 fmt.Println(k, vocabulary.Dictionary.Itov[term], histogram[k], wordTypeFactor, sampler.eventlmPriors[k][term])
 	 wordFactor += wordTypeFactor
-	 }
+       }
        // normalize LGamma(N(words_by_event) + V*prior + total_update)
        wordNorm,_ = math.Lgamma(float64(typeWordTotal) + sum(sampler.EventlmPriors[k]))
-       fmt.Println(typeWordTotal, wordNorm, "\n--------------------")
        documentLikelihood += (wordFactor - wordNorm)
      }
    return documentLikelihood

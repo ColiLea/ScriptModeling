@@ -19,31 +19,20 @@ func pick_event(tau [numTop]int) int {
 
 
 func (sampler *Sampler) Resample_t(esd *ESD, target int) {
-  var newLabel/*, oldLabel*/ int
-  
-  eventLikelihoods, participantLikelihoods, docLikelihoods, alts, tempESDs, /*oldLabel*/ _ := sampler.getDistributionsE(esd, target)
-  
+  var newLabel int  
+  eventLikelihoods, participantLikelihoods, docLikelihoods, alts, tempESDs, /*oldLabel*/ _ := sampler.getDistributionsE(esd, target)  
   // get final distribution
   distribution := make([]float64, len(eventLikelihoods))
   for idx,_ := range(eventLikelihoods) {
-    distribution[idx]=math.Log(eventLikelihoods[idx])+math.Log(participantLikelihoods[idx])+math.Log(docLikelihoods[idx])
+    distribution[idx]=math.Exp(math.Log(eventLikelihoods[idx])+math.Log(participantLikelihoods[idx])+math.Log(docLikelihoods[idx]))
   }
-  distMax, distTotal := computeNorm(distribution)
-  for idx,_ := range(distribution) {
-    distribution[idx] = math.Exp(distribution[idx]-distMax)/distTotal
-  }
-  
-  // sample new label
-  newLabel = /*max(distribution)*/sample(distribution)
-  fmt.Println("T", newLabel)
-  
-//   fmt.Println("event", eventLikelihoods)
-//   fmt.Println("ptcpt", participantLikelihoods)
-//   fmt.Println("words", docLikelihoods)
-  
+  newLabel = sample(normalized(distribution))
+  fmt.Println("SPEC", normalized(distribution))
+  fmt.Println(eventLikelihoods, participantLikelihoods, docLikelihoods)
   if newLabel == -1 {
        esd.Print()
-  }
+  } 
+  
   // check whether words have changed class; if so: resample eta
 //   newWordLabels := esd.compareTo(tempESDs[newLabel])
 //   oldWordLabels := tempESDs[newLabel].compareTo(*esd)
@@ -52,98 +41,69 @@ func (sampler *Sampler) Resample_t(esd *ESD, target int) {
 //      sampler.updateEta(oldWordLabels, math.Log(docLikelihoods[oldLabel]), "event")
 //   }
   // update model & esd
-  
    *esd = tempESDs[newLabel]
    sampler.Model.Eventtype_histogram[alts[newLabel]]++
    sampler.Model.UpdateEventWordCounts(esd.Label, 1)
    sampler.Model.UpdateEventParticipantCounts(esd.Label, 1)
    
-//    fmt.Println("T=", vocabulary.Dictionary.Itov[esd.Label[alts[newLabel]].Words[0]], target, alts[newLabel], "(with event", esd.Label[alts[newLabel]].Participants, ")")
-//    sampler.Model.Print()
-//    fmt.Println("\n\n")
-   
-//    sampler.GetFullPosterior(tempESDs, alts)
-//    
-//    fmt.Println("=======================================\n\n\n\n")
+   fmt.Println("\n\n\n\n")
 }
 
 
 func (sampler *Sampler) getDistributionsE(esd *ESD, target int) (_, _, _ []float64, _ []int, _ []ESD, oldLabel int) {
-  
-  var totalgamma, totaldoclikelihood, totalptcpt, tmax, dmax, pmax float64
-  
-  // decrement counts for current target event, and ALL words in ESD, and ALL event-participant counts
-  // ALL, since event order might change due to fixed v (ordering)
+  eventDist := make([]float64, numTop)
+  participantDist := make([]float64, numTop)
+  docLikelihoods := make([]float64, numTop)
+  fullPosterior := make([][5]float64, numTop)
+  tempESDs := make([]ESD, numTop)
+  alts := make([]int, numTop)
+  eIdx :=0
+  // decrement counts
   sampler.Model.Eventtype_histogram[target]--
   sampler.Model.UpdateEventWordCounts(esd.Label, -1)
   sampler.Model.UpdateEventParticipantCounts(esd.Label, -1)
   if sampler.Model.Eventtype_histogram[target]<0 {
     panic("Negative Event Count in resample_t")
   }
-  
-  
-  // compute switch-likelihood
-  eventDist := make([]float64, numTop)
-  participantDist := make([]float64, numTop)
-  docLikelihoods := make([]float64, numTop)
-  tempESDs := make([]ESD, numTop)
-  alts := make([]int, numTop)
-  eIdx :=0
-  
-  // iterate over eventtypes
   for tIdx, val := range(esd.Tau) {
-    // if eventtypes not realized or eventtype==target
+    // update ESD Labeling
     if val==0 || tIdx==target {
       tempESD := *esd
-      // flip if not target
       if val ==0 {
 	tempESD.flip(target, tIdx)
 	tempESD.UpdateLabelingT()
-      } else {
-	oldLabel = eIdx
-      }
-      
+      } else {oldLabel = eIdx}
+      tempESDs[eIdx]=tempESD
+      alts[eIdx]=tIdx
+      // update Model
       sampler.Model.Eventtype_histogram[tIdx]++
       sampler.Model.UpdateEventParticipantCounts(tempESD.Label, 1)
       sampler.Model.UpdateEventWordCounts(tempESD.Label, 1)
-      
-      for ee,vv := range(tempESD.Label) {
-	eventDist[eIdx] += sampler.updateComponentE(tIdx)
-	for pID,_ := range(vv.Participants) {
-	  participantDist[eIdx] += sampler.updateComponentP(pID, ee)	  
-	}
-      }
-      
+      // compute Scores
+      eventDist[eIdx] = sampler.eventLikelihood(tempESD.Label)
+      participantDist[eIdx] = sampler.participantLikelihood(tempESD.Label)
       docLikelihoods[eIdx] = sampler.documentLikelihood(tempESD.Label)
       
+      fullPosterior[eIdx] = sampler.FullPosterior(tempESD)
+      
+      // de-update Model
       sampler.Model.UpdateEventWordCounts(tempESD.Label, -1)
       sampler.Model.UpdateEventParticipantCounts(tempESD.Label, -1)
       sampler.Model.Eventtype_histogram[tIdx]--
-      
-      tempESDs[eIdx]=tempESD
-      alts[eIdx]=tIdx
       eIdx++
     }
   }
-  
-  eventDist=eventDist[:eIdx]
-  participantDist=participantDist[:eIdx]
-  docLikelihoods=docLikelihoods[:eIdx]
-  tempESDs=tempESDs[:eIdx]
-  alts=alts[:eIdx]
-  
-  tmax, totalgamma = computeNorm(eventDist)
-  dmax, totaldoclikelihood = computeNorm(docLikelihoods)
-  pmax, totalptcpt = computeNorm(participantDist)
-  
-  for idx,_ := range(eventDist) {
-    docLikelihoods[idx] = math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
-    eventDist[idx] = math.Exp(eventDist[idx]-tmax)/totalgamma
-    participantDist[idx] = math.Exp(participantDist[idx]-pmax)/totalptcpt
-  }
-  return eventDist, participantDist, docLikelihoods, alts, tempESDs, oldLabel
+  fmt.Println("FULL", normalizeFullPosterior(fullPosterior[:eIdx]))
+  return expNormalized(eventDist[:eIdx]), expNormalized(participantDist[:eIdx]), expNormalized(docLikelihoods[:eIdx]), alts[:eIdx], tempESDs[:eIdx], oldLabel
 }
 
+
+func (sampler *Sampler) eventLikelihood(esd Label) (score float64) {
+  for eventType, _ := range(esd) {
+    score += sampler.updateComponentE(eventType)
+  }
+  return
+}
 
 func (sampler *Sampler) updateComponentE(targetEvent int) (lgamma float64) {
   var tPositive, tNegative, tNormalize float64

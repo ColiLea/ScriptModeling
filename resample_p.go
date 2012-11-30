@@ -3,6 +3,7 @@
  import "math/rand"
  import "math"
  import "fmt"
+ import "sort"
  
  
  // check whether there are any participants in the esd
@@ -20,14 +21,17 @@
  func Pick_participant(label Label) int {
    events := make([]int, numTop*numPar)
    var idx int
+   
    for eID, event := range(label) {
      if len(event.Participants) > 0 {
        events[idx]=eID
        idx++
      }
    }
-   target := rand.Intn(len(events[:idx]))
-//    fmt.Println("\n\nResampling for participants in eventtype", events[target], "=", label[events[target]].Participants)
+   events=events[:idx]
+   sort.Ints(events)
+   target := rand.Intn(len(events))
+//    fmt.Println(events, events[target])
    return events[target]
  }
  
@@ -35,7 +39,6 @@
  func (sampler *Sampler) Resample_p(esd *ESD, eventID int) {
    var pIdx int
    var newV int
-   
    participants := make([]int, len(esd.Label[eventID].Participants))
    for idx,val := range(esd.Label[eventID].Tau) {
      if val==1 {
@@ -44,33 +47,18 @@
      }
    }
    participants = participants[:pIdx]
+   fmt.Println("participants", participants)
    for _, pID := range(participants) {
-     
-     
-//    fmt.Println("====", eventID, "PARTICIPANT", pID)
-//    esd.Print()
-//    fmt.Println("====")
-     
-     modelLikelihoods, docLikelihoods, alts, tempESDs, /*oldV*/ _:= sampler.getDistributionsP(*esd, pID, eventID)
-     
-     
+     modelLikelihoods, docLikelihoods, alts, tempESDs, /*oldV*/ _ := sampler.getDistributionsP(*esd, pID, eventID)
      //get final distribution
      distribution:=make([]float64, len(modelLikelihoods))
      for idx,_ := range(modelLikelihoods) {
-       distribution[idx]=math.Log(modelLikelihoods[idx])+math.Log(docLikelihoods[idx])
+       distribution[idx]=math.Exp(math.Log(modelLikelihoods[idx])+math.Log(docLikelihoods[idx]))
      }
-     distMax,distTotal := computeNorm(distribution)
-     for idx,_ := range(distribution) {
-       distribution[idx]=math.Exp(distribution[idx]-distMax)/distTotal
-     }
-     
-          
-     newV = /*max(distribution)*/sample(distribution)
-     
-   /*  fmt.Println(modelLikelihoods)
-     fmt.Println(docLikelihoods)     
-   */  fmt.Println("P", newV)
-          
+     newV = sample(normalized(distribution))
+     fmt.Println("SPEC", normalized(distribution))
+     fmt.Println(modelLikelihoods, docLikelihoods, "\n\n\n")
+
      if newV == -1 {
        esd.Print()
      } 
@@ -86,97 +74,74 @@
      sampler.Model.Participanttype_histogram[alts[newV]]++
      sampler.Model.Participanttype_eventtype_histogram[alts[newV]][eventID]++
      sampler.Model.UpdateParticipantWordCounts(alts[newV], esd.Label[eventID].Participants[alts[newV]], 1)
-     
-//      fmt.Println("P = ", vocabulary.Dictionary.Itov[esd.Label[eventID].Participants[alts[newV]][0]] , pID, alts[newV], "in event", eventID )
-//      sampler.Model.Print()
-//      fmt.Println("\n\n\n")
-
-     
    }
  }
  
  
- func (sampler *Sampler) getDistributionsP(esd ESD, pID, eventID int) (distribution, docLikelihoods []float64, alts []int, tempESDs []ESD, oldV int){
-
-   var lgamma, totalgamma, documentLikelihood, totaldoclikelihood, pmax, dmax float64
-     
-     target := pID
+ func (sampler *Sampler) getDistributionsP(esd ESD, target, eventID int) (distribution, docLikelihoods []float64, alts []int, tempESDs []ESD, oldV int){
      eIdx := 0
+     distribution = make([]float64, numPar)
+     docLikelihoods = make([]float64, numPar)
+     fullPosterior := make([][5]float64, numPar)
+     tempESDs = make([]ESD, numPar)
+     alts = make([]int, numPar)
      // Decrement Counts
      sampler.Model.Participanttype_histogram[target]--
      sampler.Model.Participanttype_eventtype_histogram[target][eventID]--
      sampler.Model.UpdateParticipantWordCounts(target, esd.Label[eventID].Participants[target], -1)
-     
      if sampler.Model.Participanttype_histogram[target]<0 {
        panic("Negative Participant Count")
      }
      if sampler.Model.Participanttype_eventtype_histogram[target][eventID]<0 {
        panic("Negative Event Participant Count in resample_p")
      }
-     // Compute likelihood for every type
-     distribution = make([]float64, numPar)
-     docLikelihoods = make([]float64, numPar)
-     tempESDs = make([]ESD, numPar)
-     alts = make([]int, numPar)
-     
+     // Compute likelihood for every alternative
      for idx, val := range(esd.Label[eventID].Tau) {
-       
+       // relabel ESD
        if val==0 || idx==target {
-	 
 	 tempESD := esd.Copy()
 	 if val==0 {
 	   tempESD.flipp(target, idx, eventID)
 	   tempESD.UpdateLabelingP(eventID, target, idx)
-	   
-	 } else {
-	   oldV=eIdx
-	 }
-// 	fmt.Println(idx, "\niiiiiiiiiiiiii")
-// 	tempESD.Print()
-// 	fmt.Println("iiiiiiiiiiiiiiii")
-// 	 fmt.Println("\n\n===================")
-// 	 sampler.Model.Print()
-	 
-	 sampler.Model.Participanttype_histogram[idx]++
-	 sampler.Model.UpdateParticipantWordCounts(idx, tempESD.Label[eventID].Participants[idx], 1)
-	 
-// 	 sampler.Model.Print()
-// 	 fmt.Println("=================\n\n")
-	 
-	 if sampler.Model.Eventtype_histogram[eventID]>0 {
-	   sampler.Model.Participanttype_eventtype_histogram[idx][eventID]++
-	   lgamma = sampler.updateComponentP(idx, eventID)
-	   sampler.Model.Participanttype_eventtype_histogram[idx][eventID]--
-	 }
-	 
-	 documentLikelihood = sampler.documentLikelihoodP(eventID, idx, tempESD.Label)
-	 sampler.Model.Participanttype_histogram[idx]--
-	 sampler.Model.UpdateParticipantWordCounts(idx, tempESD.Label[eventID].Participants[idx], -1)
-	 
-	 distribution[eIdx]=lgamma
-	 docLikelihoods[eIdx]=documentLikelihood
+	 } else {oldV=eIdx}
 	 tempESDs[eIdx]=tempESD
 	 alts[eIdx]=idx
+	 // update Model
+	 sampler.Model.Participanttype_histogram[idx]++
+	 sampler.Model.UpdateParticipantWordCounts(idx, tempESD.Label[eventID].Participants[idx], 1)
+	 // compute score
+	 if sampler.Model.Eventtype_histogram[eventID]>0 {
+	   sampler.Model.Participanttype_eventtype_histogram[idx][eventID]++
+	   distribution[eIdx] = sampler.participantLikelihood(tempESD.Label)
+	   sampler.Model.Participanttype_eventtype_histogram[idx][eventID]--
+	 }
+	 for eID, event := range(tempESD.Label) {
+	   for pID, _ := range(event.Participants) {
+	     docLikelihoods[eIdx] += sampler.documentLikelihoodP(eID, pID, tempESD.Label)
+	   }
+	 }
+	 // de-update Model
+	  sampler.Model.Participanttype_eventtype_histogram[idx][eventID]++
+	  fullPosterior[eIdx] = sampler.FullPosterior(tempESD)
+	  sampler.Model.Participanttype_eventtype_histogram[idx][eventID]--
+	 
+	 sampler.Model.Participanttype_histogram[idx]--
+	 sampler.Model.UpdateParticipantWordCounts(idx, tempESD.Label[eventID].Participants[idx], -1)
 	 eIdx++
        }
      }
-     distribution=distribution[:eIdx]
-     docLikelihoods=docLikelihoods[:eIdx]
-     tempESDs=tempESDs[:eIdx]
-     alts=alts[:eIdx]
-     
-     pmax, totalgamma = computeNorm(distribution)
-     dmax, totaldoclikelihood = computeNorm(docLikelihoods)
-     
-     tmpDist:= make([]float64, len(distribution))
-     for idx,_ := range(distribution) {
-       docLikelihoods[idx]=math.Exp(docLikelihoods[idx]-dmax)/totaldoclikelihood
-       tmpDist[idx]= math.Exp(distribution[idx]-pmax)/totalgamma
-       distribution[idx] =math.Exp(distribution[idx]-pmax)/totalgamma
-     }
-     
-     return distribution, docLikelihoods, alts, tempESDs, oldV
+     fmt.Println("FULL", normalizeFullPosterior(fullPosterior[:eIdx]))
+     return expNormalized(distribution[:eIdx]), expNormalized(docLikelihoods[:eIdx]), alts[:eIdx], tempESDs[:eIdx], oldV
    }
+   
+func (sampler *Sampler) participantLikelihood(esd Label) (score float64) {
+  for eventType, event := range(esd) {
+    for pType, _ := range(event.Participants) {
+      score += sampler.updateComponentP(pType, eventType)
+    }
+  }
+  return
+}
  
  func (sampler *Sampler) updateComponentP(participantID, eventID int) (lgamma float64) {
    // for each alternative participanttype
@@ -185,7 +150,6 @@
      pPositive,_ = math.Lgamma(float64(sampler.Model.Participanttype_eventtype_histogram[i][eventID]) + sampler.participantPrior)
      pNegative,_ = math.Lgamma(float64(sampler.Model.Eventtype_histogram[eventID]-sampler.Model.Participanttype_eventtype_histogram[i][eventID]) + sampler.participantPrior)
      pNormalize,_ = math.Lgamma(float64(sampler.Model.Eventtype_histogram[eventID]) + 2*sampler.participantPrior)
-//      fmt.Println("p", i, "e", eventID, "+" ,sampler.Model.Participanttype_eventtype_histogram[i][eventID], "-", sampler.Model.Eventtype_histogram[eventID]-sampler.Model.Participanttype_eventtype_histogram[i][eventID], sampler.Model.Eventtype_histogram[eventID], "||", pPositive, pNegative, pNormalize, "||", ((pPositive+pNegative)-pNormalize))
      lgamma += ((pPositive+pNegative)-pNormalize)
    }
    return

@@ -172,3 +172,19 @@ func expSum(priors []float64) float64 {
   }
   return sum
 }
+
+func normalized(dist []float64) []float64 {
+  norm := sum(dist)
+  for idx,_ := range(dist) {
+    dist[idx]=dist[idx]/norm
+  }
+  return dist
+}
+
+func expNormalized(dist []float64) []float64 {
+  max, norm := computeNorm(dist)
+  for idx,_ := range(dist) {
+    dist[idx] = math.Exp(dist[idx]-max)/norm
+  }
+  return dist
+}

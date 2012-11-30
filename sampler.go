@@ -40,7 +40,7 @@ func NewSampler(ePrior float64, pPrior float64, rho0 float64, nu0 float64, model
   sampler.participantPrior = pPrior  
   sampler.eventEtas, sampler.EventlmPriors  = sampler.initializeEta(numTop)
   sampler.participantEtas, sampler.ParticipantlmPriors = sampler.initializeEta(numPar)
-  sampler.nu_0 = 0.1/*2*/*float64(sampler.Model.NumESDs)
+  sampler.nu_0 = /*0.1*/100*float64(sampler.Model.NumESDs)
   sampler.v_0 = vPrior(rho0)
   sampler.Resample_rho()
   return sampler
@@ -50,7 +50,6 @@ func NewSampler(ePrior float64, pPrior float64, rho0 float64, nu0 float64, model
 //   select which random variable to resample; 0:p  1:t  2:v  3:rho
 func (sampler *Sampler)PickVariable(esd *ESD) {	
   rr := rand.Intn(3)
-  fmt.Println(rr)
   if rr <=0 && esd.hasParticipants() {
     sampler.Resample_p(esd, Pick_participant(esd.Label))
    } else if rr<=1 && len(esd.Label) < numTop {
@@ -76,8 +75,8 @@ func (sampler *Sampler)initializeEta(classes int) (eta, prior [][]float64) {
     eta[classIdx] = make([]float64, len(vocabulary.Dictionary.VList))
     prior[classIdx] = make([]float64, len(vocabulary.Dictionary.VList))
     for wordIdx, _ := range(eta[classIdx]) {
-//       prior[classIdx][wordIdx] = 1.0/(10*(float64(len(vocabulary.Dictionary.VList))))
-      prior[classIdx][wordIdx] = 0.01
+      prior[classIdx][wordIdx] = 1.0/(10*float64(len(vocabulary.Dictionary.VList)))
+//       prior[classIdx][wordIdx] = 0.01
     }
   }
   return eta, prior
@@ -100,22 +99,3 @@ func (sampler *Sampler)updatePrior(class int, mode string) {
     }
   }
 }
-
-
-// func (sampler *Sampler)FullPosterior(esds []ESD, labels []int) {
-//   eventWord := make([]float64, len(esds))
-//   ptcptWord := make([]float64, len(esds))
-//   eventLike := make([]float64, len(esds))
-//   ptcptLike := make([]float64, len(esds))
-//   for idx,_ := range(esds) {
-//     sampler.Model.Eventtype_histogram[alts[idx]]++
-//     sampler.Model.UpdateEventParticipantCounts(esds[idx],1)
-//     eventWord[idx] = sampler.updateComponentE(alts[idx])
-//     for
-//     ptcptWord[idx] += 
-//     sampler.Model.Eventtype_histogram[alts[idx]]--
-//     sampler.Model.UpdateEventParticipantCounts(esds[idx],-1)
-//   }
-// }
-
-
