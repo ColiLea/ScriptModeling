@@ -1,5 +1,3 @@
-ScriptModeling
-==============
 
 Library for inducing knowledge about scripts using hierarchical Bayesian modeling and Gibbs Sampling for inference.
 
